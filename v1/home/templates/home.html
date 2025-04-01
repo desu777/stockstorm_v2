@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}StockStorm - Automated Trading & Smart Investment Platform{% endblock %}
+
+{% block content %}
+<section class="hero" style="padding: 80px 0; text-align: center;">
+    <div class="hero-content">
+        <h1 style="font-size: 3.5rem; margin-bottom: 20px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; line-height: 1.2; letter-spacing: -1px;">
+            Smart Trading Platform for Crypto & Traditional Markets
+        </h1>
+        <p style="font-size: 1.2rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 40px; line-height: 1.6;">
+            StockStorm helps you automate trading across multiple markets with AI-powered tools, smart wallets, and advanced grid strategies.
+        </p>
+        <div class="hero-cta" style="display: flex; gap: 20px; justify-content: center; margin-bottom: 50px;">
+            <a href="{% url 'register' %}" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.1rem; font-weight: 600;">Get Started For Free</a>
+            <a href="{% url 'login' %}" class="btn btn-outline" style="padding: 15px 40px; font-size: 1.1rem; font-weight: 600;">Login</a>
+        </div>
+        <div class="hero-badge" style="display: inline-block; background: rgba(138, 43, 226, 0.1); border-radius: 50px; padding: 6px 20px; margin-bottom: 30px; border: 1px solid rgba(138, 43, 226, 0.3);">
+            <span style="color: var(--neon-purple); font-weight: 500; font-size: 0.9rem;">AI-Powered Trading Experience</span>
+        </div>
+    </div>
+</section>
+
+<!-- TradingView Widget BEGIN -->
+<div class="tradingview-widget-container" style="margin-bottom: 30px;">
+  <div class="tradingview-widget-container__widget"></div>
+  <div class="tradingview-widget-copyright"><a href="https://www.tradingview.com/" rel="noopener nofollow" target="_blank"><span class="blue-text">Track all markets on TradingView</span></a></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-ticker-tape.js" async>
+  {
+  "symbols": [
+    {
+      "proName": "FOREXCOM:SPXUSD",
+      "title": "S&P 500 Index"
+    },
+    {
+      "proName": "FOREXCOM:NSXUSD",
+      "title": "US 100 Cash CFD"
+    },
+    {
+      "proName": "BITSTAMP:BTCUSD",
+      "title": "Bitcoin"
+    },
+    {
+      "proName": "BITSTAMP:ETHUSD",
+      "title": "Ethereum"
+    },
+    {
+      "description": "USDPLN",
+      "proName": "FX_IDC:USDPLN"
+    },
+    {
+      "description": "TSLA",
+      "proName": "NASDAQ:TSLA"
+    }
+  ],
+  "showSymbolLogo": true,
+  "isTransparent": false,
+  "displayMode": "adaptive",
+  "colorTheme": "dark",
+  "locale": "en"
+}
+  </script>
+</div>
+<!-- TradingView Widget END -->
+
+<!-- New Platform Overview Section -->
+<section class="platform-overview" style="padding: 60px 0; text-align: center; margin-bottom: 60px;">
+    <h2 style="font-size: 2.5rem; margin-bottom: 40px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+        Complete Trading Ecosystem
+    </h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 25px; padding: 0 20px;">
+        <!-- HP CRYPTO Card -->
+        <div class="platform-card" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 35px; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: var(--gradient); opacity: 0.1; border-radius: 0 0 0 100%;"></div>
+            <div style="font-size: 3rem; margin-bottom: 20px; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 15px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;">
+                HP CRYPTO
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 25px;">
+                Smart portfolio manager for cryptocurrency investments with categorized holdings and real-time alerts.
+            </p>
+            <a href="#" class="btn btn-outline btn-sm" style="font-size: 0.9rem; padding: 8px 20px;">Explore HP CRYPTO</a>
+        </div>
+        
+        <!-- HP GT Card -->
+        <div class="platform-card" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 35px; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: var(--gradient); opacity: 0.1; border-radius: 0 0 0 100%;"></div>
+            <div style="font-size: 3rem; margin-bottom: 20px; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 15px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;">
+                HP GT
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 25px;">
+                Traditional market portfolio with customizable categories and real-time price monitoring and alerts.
+            </p>
+            <a href="#" class="btn btn-outline btn-sm" style="font-size: 0.9rem; padding: 8px 20px;">Explore HP GT</a>
+        </div>
+        
+        <!-- AI Agent Card -->
+        <div class="platform-card" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 35px; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease; text-align: center; position: relative; overflow: hidden;">
+            <div style="position: absolute; top: 0; right: 0; width: 80px; height: 80px; background: var(--gradient); opacity: 0.1; border-radius: 0 0 0 100%;"></div>
+            <div style="font-size: 3rem; margin-bottom: 20px; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 15px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;">
+                AI Agent
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 1rem; margin-bottom: 25px;">
+                Intelligent wallet assistant powered by technical analysis knowledge to automate trading through chat.
+            </p>
+            <a href="#" class="btn btn-outline btn-sm" style="font-size: 0.9rem; padding: 8px 20px;">Try AI Agent</a>
+        </div>
+    </div>
+</section>
+
+<section class="features" style="padding: 80px 0; background-color: var(--dark-surface); border-radius: var(--border-radius); margin-bottom: 80px; box-shadow: var(--shadow);">
+    <div style="text-align: center; margin-bottom: 60px;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 20px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+            Trading Made Smarter
+        </h2>
+        <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto;">
+            Our platform simplifies trading across multiple markets with powerful tools and AI-driven assistance.
+        </p>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 30px; padding: 0 20px;">
+        <div class="feature-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 30px; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 20px; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 style="font-size: 1.4rem; margin-bottom: 15px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;">
+                Automated Bots
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                Set up trading bots that work 24/7 following your custom strategies without requiring your constant attention.
+            </p>
+        </div>
+        
+        <div class="feature-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 30px; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 20px; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 style="font-size: 1.4rem; margin-bottom: 15px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;">
+                Real-time Monitoring
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                Track your trading performance with comprehensive dashboards and real-time analytics.
+            </p>
+        </div>
+        
+        <div class="feature-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 30px; box-shadow: var(--shadow); border: 1px solid rgba(255, 255, 255, 0.05); transition: transform 0.3s ease; text-align: center;">
+            <div style="font-size: 3rem; margin-bottom: 20px; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                <i class="fas fa-telegram"></i>
+            </div>
+            <h3 style="font-size: 1.4rem; margin-bottom: 15px; font-weight: 600; font-family: 'Space Grotesk', sans-serif;">
+                Telegram Integration
+            </h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                Get alerts and manage your bots directly from Telegram for convenient trading on-the-go.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Grid Strategy Section -->
+<section class="grid-strategies" style="padding: 70px 0; margin-bottom: 80px; text-align: center;">
+    <div style="max-width: 1000px; margin: 0 auto; background-color: var(--dark-card); border-radius: var(--border-radius); padding: 50px 30px; box-shadow: var(--shadow); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -50px; right: -50px; width: 200px; height: 200px; background: var(--gradient); opacity: 0.05; border-radius: 50%;"></div>
+        <div style="position: absolute; bottom: -30px; left: -30px; width: 150px; height: 150px; background: var(--gradient); opacity: 0.05; border-radius: 50%;"></div>
+        
+        <h2 style="font-size: 2.3rem; margin-bottom: 25px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+            Advanced Grid Trading Strategies
+        </h2>
+        <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 40px;">
+            Our 51015 and 51015rei strategies redefine grid trading for passive income with improved efficiency and risk management.
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; margin-bottom: 40px;">
+            <div style="background-color: rgba(255, 255, 255, 0.03); border-radius: var(--border-radius); padding: 25px; text-align: left; border: 1px solid rgba(255, 255, 255, 0.05);">
+                <h3 style="font-size: 1.3rem; margin-bottom: 15px; font-family: 'Space Grotesk', sans-serif; color: var(--text-primary);">51015 Strategy</h3>
+                <ul style="color: var(--text-secondary); font-size: 0.95rem; padding-left: 20px; line-height: 1.6;">
+                    <li>Enhanced grid trading algorithm</li>
+                    <li>Smart capital allocation across price levels</li>
+                    <li>Optimized entry and exit points</li>
+                    <li>Automated rebalancing for maximum efficiency</li>
+                </ul>
+            </div>
+            
+            <div style="background-color: rgba(255, 255, 255, 0.03); border-radius: var(--border-radius); padding: 25px; text-align: left; border: 1px solid rgba(255, 255, 255, 0.05);">
+                <h3 style="font-size: 1.3rem; margin-bottom: 15px; font-family: 'Space Grotesk', sans-serif; color: var(--text-primary);">51015rei Strategy</h3>
+                <ul style="color: var(--text-secondary); font-size: 0.95rem; padding-left: 20px; line-height: 1.6;">
+                    <li>Advanced risk management system</li>
+                    <li>Dynamic profit taking mechanisms</li>
+                    <li>Intelligent trend recognition</li>
+                    <li>Maximized passive income potential</li>
+                </ul>
+            </div>
+        </div>
+        
+        <a href="#" class="btn btn-primary" style="padding: 12px 30px; font-size: 1rem; font-weight: 600;">
+            Explore Grid Strategies
+        </a>
+    </div>
+</section>
+
+<section class="how-it-works" style="padding: 80px 0; text-align: center;">
+    <h2 style="font-size: 2.5rem; margin-bottom: 60px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+        How StockStorm Works
+    </h2>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 50px; max-width: 900px; margin: 0 auto;">
+        <div class="step" style="position: relative;">
+            <div class="step-number" style="width: 50px; height: 50px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 1.4rem; font-weight: 700; color: white; box-shadow: var(--neon-shadow-purple);">
+                1
+            </div>
+            <h3 style="font-size: 1.3rem; margin-bottom: 15px; font-family: 'Space Grotesk', sans-serif;">Create Account</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                Sign up for free and setup your trading preferences in just a few minutes.
+            </p>
+        </div>
+        
+        <div class="step" style="position: relative;">
+            <div class="step-number" style="width: 50px; height: 50px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 1.4rem; font-weight: 700; color: white; box-shadow: var(--neon-shadow-purple);">
+                2
+            </div>
+            <h3 style="font-size: 1.3rem; margin-bottom: 15px; font-family: 'Space Grotesk', sans-serif;">Configure Your Tools</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                Set up your portfolios, bots, and AI agent with your preferred assets and parameters.
+            </p>
+        </div>
+        
+        <div class="step" style="position: relative;">
+            <div class="step-number" style="width: 50px; height: 50px; background: var(--gradient); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 1.4rem; font-weight: 700; color: white; box-shadow: var(--neon-shadow-purple);">
+                3
+            </div>
+            <h3 style="font-size: 1.3rem; margin-bottom: 15px; font-family: 'Space Grotesk', sans-serif;">Start Trading</h3>
+            <p style="color: var(--text-secondary); font-size: 0.95rem;">
+                Launch your automated tools and let our platform handle the trading while you monitor performance.
+            </p>
+        </div>
+    </div>
+</section>
+
+<section class="cta" style="padding: 80px 0; background-color: var(--dark-card); border-radius: var(--border-radius); margin: 80px 0; text-align: center; box-shadow: var(--shadow); position: relative; overflow: hidden;">
+    <div style="position: absolute; width: 100%; height: 100%; top: 0; left: 0; background: linear-gradient(135deg, rgba(138, 43, 226, 0.1), rgba(58, 134, 255, 0.1)); z-index: 0;"></div>
+    <div style="position: relative; z-index: 1;">
+        <h2 style="font-size: 2.5rem; margin-bottom: 20px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; color: var(--text-primary); max-width: 800px; margin-left: auto; margin-right: auto;">
+            Ready to Start <span style="background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">Smart Trading</span>?
+        </h2>
+        <p style="font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 40px;">
+            Join traders who are using StockStorm's AI-powered platform to automate their trading across multiple markets.
+        </p>
+        <a href="{% url 'register' %}" class="btn btn-primary" style="padding: 15px 40px; font-size: 1.1rem; font-weight: 600; box-shadow: var(--neon-shadow-purple);">
+            Get Started For Free
+        </a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,647 @@
+{% extends "base.html" %}
+{% load static %}
+{% load hpcrypto_extras %}
+
+{% block title %}Crypto Portfolio | StockStorm{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Styl dla ikon akcji */
+    .action-icon {
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: color 0.2s;
+    }
+    .action-icon:hover {
+        color: var(--neon-blue);
+    }
+    
+    /* Styl dla sekcji oczekujących zleceń */
+    .pending-orders-section {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: var(--dark-card);
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .pending-orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    
+    .pending-orders-table th {
+        text-align: left;
+        padding: 12px 15px;
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-waiting {
+        background-color: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+    }
+    
+    .badge-created {
+        background-color: rgba(0, 123, 255, 0.15);
+        color: #007bff;
+    }
+    
+    .badge-executed {
+        background-color: rgba(40, 167, 69, 0.15);
+        color: #28a745;
+    }
+    
+    .badge-cancelled {
+        background-color: rgba(108, 117, 125, 0.15);
+        color: #6c757d;
+    }
+    
+    .badge-error {
+        background-color: rgba(220, 53, 69, 0.15);
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="font-size: 2.2rem; font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">Crypto Portfolio</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'add_category' %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-folder-plus"></i> Add Category</a>
+            <a href="{% url 'add_position' %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-plus"></i> Add Position</a>
+            <button id="update-prices" class="btn btn-outline" style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-sync-alt"></i> Update Prices</button>
+        </div>
+    </div>
+    
+    <!-- Auto-refresh toggle -->
+    <div style="display: flex; align-items: center; margin-bottom: 20px; background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; box-shadow: var(--shadow);">
+        <div class="auto-refresh-control" style="display: flex; align-items: center; margin-right: 20px;">
+            <input type="checkbox" id="auto-refresh" checked style="margin-right: 8px;">
+            <label for="auto-refresh" style="color: var(--text-secondary); font-size: 0.9rem;">Auto-refresh (30s)</label>
+        </div>
+        <div style="color: var(--text-secondary); font-size: 0.9rem;">
+            Last updated: <span id="last-update-time">{{ now }}</span>
+        </div>
+    </div>
+    
+    <!-- Portfolio Summary -->
+    <div class="portfolio-summary-card" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 25px; margin-bottom: 30px; box-shadow: var(--shadow);">
+        <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: var(--text-primary); font-weight: 600;">Portfolio Summary</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Total Invested</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);">${{ total_invested|floatformat:2 }}</div>
+            </div>
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Current Value</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);">${{ total_current_value|floatformat:2 }}</div>
+            </div>
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Total P/L</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: {% if total_profit_loss >= 0 %}var(--neon-green){% else %}var(--neon-red){% endif %};">${{ total_profit_loss|floatformat:2 }} ({{ total_profit_loss_percent|floatformat:2 }}%)</div>
+            </div>
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Active Positions</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);">{{ active_positions_count }}</div>
+            </div>
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Closed Positions</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);">{{ closed_positions_count }}</div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="flex: 1; min-width: 250px; background-color: var(--dark-card); padding: 20px; border-radius: var(--border-radius); box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);">
+        <span style="display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 8px;">Positions</span>
+        <span style="display: block; color: var(--text-primary); font-size: 1.6rem; font-weight: 600;">
+            {{ active_positions_count }} Active / {{ closed_positions_count }} Closed
+        </span>
+    </div>
+    
+    <!-- Link to Pending Orders Page -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+        <a href="{% url 'order_list' %}" class="btn btn-outline" style="display: flex; align-items: center; gap: 5px;">
+            <i class="fas fa-hourglass-half"></i> View Pending Orders
+        </a>
+    </div>
+    
+    <!-- Categories and Positions -->
+    {% for category in categories %}
+    <div class="category-card" id="category-{{ category.id }}" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 25px; margin-bottom: 30px; box-shadow: var(--shadow);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.4rem; color: var(--text-primary); font-weight: 600;">{{ category.name }}</h3>
+            <div style="display: flex; gap: 10px;">
+                <a href="{% url 'edit_category' category.id %}" class="btn btn-sm btn-outline" title="Edit Category"><i class="fas fa-edit"></i></a>
+                <a href="{% url 'delete_category' category.id %}" class="btn btn-sm btn-danger" title="Delete Category" style="position: relative;"><i class="fas fa-trash delete-icon"></i></a>
+            </div>
+        </div>
+        
+        {% if category.description %}
+        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">{{ category.description }}</div>
+        {% endif %}
+        
+        <!-- Category Summary -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px;">
+            <div style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; box-shadow: var(--shadow-sm);">
+                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 5px;">Total Invested</div>
+                <div class="category-total-invested" style="font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">${{ category.total_invested|floatformat:2 }}</div>
+            </div>
+            <div style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; box-shadow: var(--shadow-sm);">
+                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 5px;">Current Value</div>
+                <div class="category-current-value" style="font-size: 1.2rem; font-weight: 600; color: var(--text-primary);">${{ category.current_value|floatformat:2 }}</div>
+            </div>
+            <div style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; box-shadow: var(--shadow-sm);">
+                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-bottom: 5px;">Total P/L</div>
+                <div class="category-pnl" style="font-size: 1.2rem; font-weight: 600; color: {% if category.pnl_dollar >= 0 %}var(--neon-green){% else %}var(--neon-red){% endif %};">${{ category.pnl_dollar|floatformat:2 }} ({{ category.pnl_percent|floatformat:2 }}%)</div>
+            </div>
+        </div>
+        
+        <!-- Positions Table -->
+        <div style="overflow-x: auto; margin-bottom: 10px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: left;">
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Ticker</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Quantity</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Entry Price</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Current Price</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Value</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">P/L $</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">P/L %</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% with total_positions=category.positions.all.count %}
+                    {% for position in category.positions.all|slice:":2" %}
+                    <tr id="position-{{ position.id }}" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                        <td style="padding: 12px 15px; color: var(--text-primary); font-weight: 500;">{{ position.ticker }}</td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);">{{ position.quantity }}</td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);">${{ position.entry_price }}</td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);" class="position-current-price">
+                            {% if position.current_price %}
+                                ${{ position.current_price }}
+                                {% if position.last_price_update %}
+                                <div style="font-size: 0.7rem; color: var(--text-secondary);">{{ position.last_price_update|date:"M d, H:i" }}</div>
+                                {% endif %}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);" class="position-value">
+                            {% if position.current_price %}
+                                ${{ position.current_value|floatformat:2 }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px; color: {% if position.pnl_dollar >= 0 %}var(--neon-green){% else %}var(--neon-red){% endif %};" class="position-pnl-dollar">
+                            {% if position.pnl_dollar %}
+                                ${{ position.pnl_dollar|floatformat:2 }}
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px;" 
+                            class="position-pnl-percent 
+                                {% if position.pnl_percent > 0 %}pl-positive
+                                {% elif position.pnl_percent >= -30 %}pl-neutral
+                                {% else %}pl-negative{% endif %}">
+                            {% if position.pnl_percent %}
+                                {{ position.pnl_percent|floatformat:2 }}%
+                            {% else %}
+                                --
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px;">
+                            <div style="display: flex; gap: 8px; justify-content: flex-start;">
+                                <a href="{% url 'position_detail' position.id %}" class="btn btn-sm btn-outline" title="View Details"><i class="fas fa-eye"></i></a>
+                                <a href="{% url 'edit_position' position.id %}" class="btn btn-sm btn-outline" title="Edit Position"><i class="fas fa-edit"></i></a>
+                                <a href="{% url 'delete_position' position.id %}" class="btn btn-sm btn-danger" title="Delete Position" style="position: relative;"><i class="fas fa-trash delete-icon"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    
+                    <!-- Ukryte pozycje (powyżej pierwszych 2) -->
+                    {% if total_positions > 2 %}
+                    <tr class="more-positions-{{ category.id }}" style="display: none;">
+                        <td colspan="8" style="padding: 0;">
+                            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                                {% for position in category.positions.all|slice:"2:" %}
+                                <tr id="position-{{ position.id }}" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                    <td style="padding: 12px 15px; color: var(--text-primary); font-weight: 500;">{{ position.ticker }}</td>
+                                    <td style="padding: 12px 15px; color: var(--text-primary);">{{ position.quantity }}</td>
+                                    <td style="padding: 12px 15px; color: var(--text-primary);">${{ position.entry_price }}</td>
+                                    <td style="padding: 12px 15px; color: var(--text-primary);" class="position-current-price">
+                                        {% if position.current_price %}
+                                            ${{ position.current_price }}
+                                            {% if position.last_price_update %}
+                                            <div style="font-size: 0.7rem; color: var(--text-secondary);">{{ position.last_price_update|date:"M d, H:i" }}</div>
+                                            {% endif %}
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 15px; color: var(--text-primary);" class="position-value">
+                                        {% if position.current_price %}
+                                            ${{ position.current_value|floatformat:2 }}
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 15px; color: {% if position.pnl_dollar >= 0 %}var(--neon-green){% else %}var(--neon-red){% endif %};" class="position-pnl-dollar">
+                                        {% if position.pnl_dollar %}
+                                            ${{ position.pnl_dollar|floatformat:2 }}
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 15px;" 
+                                        class="position-pnl-percent
+                                            {% if position.pnl_percent > 0 %}pl-positive
+                                            {% elif position.pnl_percent >= -30 %}pl-neutral
+                                            {% else %}pl-negative{% endif %}">
+                                        {% if position.pnl_percent %}
+                                            {{ position.pnl_percent|floatformat:2 }}%
+                                        {% else %}
+                                            --
+                                        {% endif %}
+                                    </td>
+                                    <td style="padding: 12px 15px;">
+                                        <div style="display: flex; gap: 8px; justify-content: flex-start;">
+                                            <a href="{% url 'position_detail' position.id %}" class="btn btn-sm btn-outline" title="View Details"><i class="fas fa-eye"></i></a>
+                                            <a href="{% url 'edit_position' position.id %}" class="btn btn-sm btn-outline" title="Edit Position"><i class="fas fa-edit"></i></a>
+                                            <a href="{% url 'delete_position' position.id %}" class="btn btn-sm btn-danger" title="Delete Position" style="position: relative;"><i class="fas fa-trash delete-icon"></i></a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </table>
+                        </td>
+                    </tr>
+                    
+                    <!-- Przycisk "Pokaż więcej" -->
+                    <tr class="show-more-row-{{ category.id }}">
+                        <td colspan="8" style="text-align: center; padding: 10px;">
+                            <button class="btn btn-sm btn-outline show-more-btn" data-category="{{ category.id }}" style="width: auto;">
+                                <span class="show-text"><i class="fas fa-chevron-down"></i> Pokaż więcej ({{ total_positions|add:"-2" }})</span>
+                                <span class="hide-text" style="display: none;"><i class="fas fa-chevron-up"></i> Ukryj</span>
+                            </button>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endwith %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not category.positions.all %}
+        <div style="text-align: center; padding: 30px 0; color: var(--text-secondary);">
+            <p><i class="fas fa-info-circle"></i> No positions in this category yet.</p>
+            <a href="{% url 'add_position' %}" class="btn btn-sm btn-primary" style="margin-top: 10px;">Add Position</a>
+        </div>
+        {% endif %}
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 50px 0; background-color: var(--dark-surface); border-radius: var(--border-radius); box-shadow: var(--shadow);">
+        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Welcome to StockStorm Crypto Portfolio</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">You haven't created any HP categories yet. Start by adding a category.</p>
+        <a href="{% url 'add_category' %}" class="btn btn-primary">Create Your First Category</a>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let autoRefreshInterval;
+    const autoRefreshCheckbox = document.getElementById('auto-refresh');
+    
+    // Set up auto-refresh based on checkbox state
+    autoRefreshCheckbox.addEventListener('change', function() {
+        toggleAutoRefresh(this.checked);
+    });
+    
+    // Initialize auto-refresh
+    toggleAutoRefresh(autoRefreshCheckbox.checked);
+    
+    function toggleAutoRefresh(enabled) {
+        if (enabled) {
+            autoRefreshInterval = setInterval(updateAllPrices, 30000); // 30 seconds
+        } else {
+            clearInterval(autoRefreshInterval);
+        }
+    }
+    
+    // Get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Function to update position data display
+    function updatePositionsData(positions) {
+        positions.forEach(position => {
+            const row = document.getElementById(`position-${position.id}`);
+            if (row) {
+                // Update current price
+                const currentPriceCell = row.querySelector('.position-current-price');
+                
+                // Obsługa różnych formatów daty (last_update_timestamp lub ostatnia data aktualizacji)
+                let dateStr = "N/A";
+                if (position.last_update_timestamp) {
+                    try {
+                        dateStr = new Date(position.last_update_timestamp).toLocaleString();
+                    } catch (e) {
+                        console.error("Invalid date format:", position.last_update_timestamp);
+                    }
+                }
+                
+                currentPriceCell.innerHTML = `$${position.current_price.toFixed(2)}<div style="font-size: 0.7rem; color: var(--text-secondary);">${dateStr}</div>`;
+                
+                // Update value - using position_size property directly
+                if (position.current_price && position.quantity) {
+                    const value = parseFloat(position.current_price) * parseFloat(position.quantity);
+                    row.querySelector('.position-value').textContent = `$${value.toFixed(2)}`;
+                }
+                
+                // Update P/L dollar
+                const pnlDollarCell = row.querySelector('.position-pnl-dollar');
+                pnlDollarCell.textContent = `$${position.pnl_dollar.toFixed(2)}`;
+                pnlDollarCell.style.color = position.pnl_dollar >= 0 ? 'var(--neon-green)' : 'var(--neon-red)';
+                
+                // Update P/L percent
+                const pnlPercentCell = row.querySelector('.position-pnl-percent');
+                pnlPercentCell.textContent = `${position.pnl_percent.toFixed(2)}%`;
+                
+                // Kolorowanie P/L% według nowych wymagań - używam klas
+                pnlPercentCell.classList.remove('pl-positive', 'pl-neutral', 'pl-negative');
+                if (position.pnl_percent > 0) {
+                    pnlPercentCell.classList.add('pl-positive');
+                } else if (position.pnl_percent >= -30) {
+                    pnlPercentCell.classList.add('pl-neutral');
+                } else {
+                    pnlPercentCell.classList.add('pl-negative');
+                }
+            }
+        });
+    }
+    
+    // Function to update category summaries
+    function updateCategorySummaries(categories) {
+        categories.forEach(category => {
+            const categoryCard = document.getElementById(`category-${category.id}`);
+            if (categoryCard) {
+                // Update category stats
+                categoryCard.querySelector('.category-total-invested').textContent = `$${category.total_invested.toFixed(2)}`;
+                categoryCard.querySelector('.category-current-value').textContent = `$${category.current_value.toFixed(2)}`;
+                
+                const pnlElement = categoryCard.querySelector('.category-pnl');
+                pnlElement.textContent = `$${category.pnl_dollar.toFixed(2)} (${category.pnl_percent.toFixed(2)}%)`;
+                pnlElement.style.color = category.pnl_dollar >= 0 ? 'var(--neon-green)' : 'var(--neon-red)';
+            }
+        });
+    }
+    
+    // Function to update portfolio summary
+    function updatePortfolioSummary(portfolio) {
+        // Update portfolio stats
+        document.querySelector('.portfolio-summary-card .stat-value:nth-of-type(1)').textContent = `$${portfolio.total_invested.toFixed(2)}`;
+        document.querySelector('.portfolio-summary-card .stat-value:nth-of-type(2)').textContent = `$${portfolio.total_current_value.toFixed(2)}`;
+        
+        const pnlElement = document.querySelector('.portfolio-summary-card .stat-value:nth-of-type(3)');
+        pnlElement.textContent = `$${portfolio.total_profit_loss.toFixed(2)} (${portfolio.profit_loss_percentage.toFixed(2)}%)`;
+        pnlElement.style.color = portfolio.total_profit_loss >= 0 ? 'var(--neon-green)' : 'var(--neon-red)';
+        
+        document.querySelector('.portfolio-summary-card .stat-value:nth-of-type(4)').textContent = portfolio.active_positions_count;
+        document.querySelector('.portfolio-summary-card .stat-value:nth-of-type(5)').textContent = portfolio.closed_positions_count;
+        
+        // Update timestamp
+        const dateStr = new Date(portfolio.timestamp).toLocaleString();
+        document.getElementById('last-update-time').textContent = dateStr;
+    }
+    
+    // Display alert messages
+    function displayAlerts(alerts) {
+        if (alerts && alerts.length > 0) {
+            // Create alert container if it doesn't exist
+            let alertContainer = document.getElementById('alert-container');
+            if (!alertContainer) {
+                alertContainer = document.createElement('div');
+                alertContainer.id = 'alert-container';
+                alertContainer.style.position = 'fixed';
+                alertContainer.style.top = '20px';
+                alertContainer.style.right = '20px';
+                alertContainer.style.zIndex = '1000';
+                document.body.appendChild(alertContainer);
+            }
+            
+            // Add each alert message
+            alerts.forEach(alert => {
+                const alertElement = document.createElement('div');
+                alertElement.className = 'alert-message';
+                alertElement.style.backgroundColor = 'var(--dark-card)';
+                alertElement.style.color = 'var(--text-primary)';
+                alertElement.style.padding = '15px 20px';
+                alertElement.style.marginBottom = '10px';
+                alertElement.style.borderRadius = 'var(--border-radius)';
+                alertElement.style.boxShadow = 'var(--shadow)';
+                alertElement.style.borderLeft = '4px solid var(--neon-purple)';
+                alertElement.innerHTML = alert.message;
+                
+                // Add close button
+                const closeBtn = document.createElement('span');
+                closeBtn.innerHTML = '&times;';
+                closeBtn.style.float = 'right';
+                closeBtn.style.cursor = 'pointer';
+                closeBtn.style.fontWeight = 'bold';
+                closeBtn.onclick = function() {
+                    alertElement.remove();
+                };
+                alertElement.appendChild(closeBtn);
+                
+                // Auto-remove after 10 seconds
+                alertContainer.appendChild(alertElement);
+                setTimeout(() => {
+                    alertElement.remove();
+                }, 10000);
+            });
+        }
+    }
+    
+    // Function to handle manual price update
+    document.getElementById('update-prices').addEventListener('click', function() {
+        updateAllPrices();
+    });
+    
+    // Funkcja do wyświetlania ładnych komunikatów systemowych
+    function showSystemMessage(message, type = 'info', timeout = 5000) {
+        // Usuń istniejące komunikaty
+        const existingMessage = document.getElementById('system-message');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Stwórz nowy komunikat
+        const messageEl = document.createElement('div');
+        messageEl.id = 'system-message';
+        messageEl.className = type;
+        messageEl.innerHTML = `
+            <span class="system-message-close">&times;</span>
+            <div>${message}</div>
+        `;
+        document.body.appendChild(messageEl);
+        
+        // Dodaj obsługę przycisku zamknięcia
+        messageEl.querySelector('.system-message-close').addEventListener('click', function() {
+            messageEl.style.animation = 'fadeOut 0.3s ease';
+            setTimeout(() => messageEl.remove(), 300);
+        });
+        
+        // Automatycznie ukryj po określonym czasie
+        if (timeout > 0) {
+            setTimeout(() => {
+                if (messageEl.parentNode) {
+                    messageEl.style.animation = 'fadeOut 0.3s ease';
+                    setTimeout(() => {
+                        if (messageEl.parentNode) {
+                            messageEl.remove();
+                        }
+                    }, 300);
+                }
+            }, timeout);
+        }
+    }
+    
+    // Function to update all prices via the API
+    function updateAllPrices() {
+        const priceBox = document.getElementById('price-update-box');
+        const updateBtn = document.getElementById('update-prices');
+        
+        updateBtn.disabled = true;
+        updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+        
+        fetch('/hpcrypto/api/update-prices/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken'),
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update positions data
+                updatePositionsData(data.positions_data);
+                
+                // Update category summaries
+                updateCategorySummaries(data.categories);
+                
+                // Update portfolio summary
+                updatePortfolioSummary(data.portfolio);
+                
+                // Display any triggered alerts
+                displayAlerts(data.triggered_alerts);
+                
+                // Pokaż komunikat sukcesu
+                showSystemMessage(data.message, 'success');
+            } else {
+                console.error('Error updating prices:', data.message);
+                showSystemMessage('Error updating prices: ' + data.message, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showSystemMessage('Error connecting to server. Please try again later.', 'error');
+        })
+        .finally(() => {
+            updateBtn.disabled = false;
+            updateBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Prices';
+        });
+    }
+    
+    // Obsługa przycisków "Pokaż więcej"
+    document.querySelectorAll('.show-more-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const categoryId = this.getAttribute('data-category');
+            const morePositions = document.querySelector(`.more-positions-${categoryId}`);
+            const showText = this.querySelector('.show-text');
+            const hideText = this.querySelector('.hide-text');
+            
+            if (morePositions.style.display === 'none') {
+                morePositions.style.display = 'table-row';
+                showText.style.display = 'none';
+                hideText.style.display = 'inline';
+            } else {
+                morePositions.style.display = 'none';
+                showText.style.display = 'inline';
+                hideText.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+
+<style>
+    /* Add styles for the delete icon */
+    .delete-icon {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .delete-icon::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid var(--neon-red);
+        animation: pulse 1.5s infinite;
+        z-index: -1;
+    }
+    
+    /* Style dla kolorowania P/L% - teraz jako klasy z !important */
+    .pl-positive { color: #4cd964 !important; }
+    .pl-neutral { color: #ffd700 !important; }
+    .pl-negative { color: #ff3b30 !important; }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 5px rgba(220, 53, 69, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+</style>
+{% endblock %}

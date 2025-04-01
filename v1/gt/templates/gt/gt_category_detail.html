@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ category.name }} Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Category Header -->
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">{{ category.name }}</h1>
+        <div>
+            <a href="{% url 'gt_add_position' %}" class="btn btn-sm btn-primary shadow-sm">
+                <i class="fas fa-plus fa-sm text-white-50 mr-1"></i> Add Position
+            </a>
+            <a href="{% url 'gt_edit_category' category_id=category.id %}" class="btn btn-sm btn-info shadow-sm">
+                <i class="fas fa-edit fa-sm text-white-50 mr-1"></i> Edit Category
+            </a>
+            <a href="{% url 'gt_position_list' %}" class="btn btn-sm btn-secondary shadow-sm">
+                <i class="fas fa-arrow-left fa-sm text-white-50 mr-1"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <!-- Category Info Card -->
+    <div class="row">
+        <div class="col-xl-12 col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Category Details</h6>
+                </div>
+                <div class="card-body">
+                    {% if category.description %}
+                    <p>{{ category.description }}</p>
+                    {% else %}
+                    <p class="text-muted">No description available</p>
+                    {% endif %}
+                    <p><strong>Created:</strong> {{ category.created_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Positions Table -->
+    <div class="row">
+        <div class="col-xl-12 col-lg-12">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Positions in {{ category.name }}</h6>
+                    <button id="refresh-prices-btn" class="btn btn-sm btn-info shadow-sm">
+                        <i class="fas fa-sync fa-sm text-white-50 mr-1"></i> Refresh Prices
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered" id="positions-table" width="100%" cellspacing="0">
+                            <thead>
+                                <tr>
+                                    <th>Ticker</th>
+                                    <th>Quantity</th>
+                                    <th>Entry Price</th>
+                                    <th>Current Price</th>
+                                    <th>Position Value</th>
+                                    <th>P/L</th>
+                                    <th>P/L %</th>
+                                    <th>Last Updated</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for position in positions %}
+                                <tr class="position-row" data-id="{{ position.id }}">
+                                    <td><strong>{{ position.ticker }}</strong></td>
+                                    <td>{{ position.quantity }}</td>
+                                    <td>${{ position.entry_price|floatformat:2 }}</td>
+                                    <td class="current-price">
+                                        {% if position.current_price %}
+                                            ${{ position.current_price|floatformat:2 }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="position-value">
+                                        {% if position.current_price %}
+                                            ${{ position.quantity|floatformat:4|multiply:position.current_price|floatformat:2 }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="profit-loss-dollar {% if position.profit_loss_dollar > 0 %}text-success{% elif position.profit_loss_dollar < 0 %}text-danger{% endif %}">
+                                        {% if position.profit_loss_dollar is not None %}
+                                            ${{ position.profit_loss_dollar|floatformat:2 }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="profit-loss-percent {% if position.profit_loss_percent > 0 %}text-success{% elif position.profit_loss_percent < 0 %}text-danger{% endif %}">
+                                        {% if position.profit_loss_percent is not None %}
+                                            {{ position.profit_loss_percent|floatformat:2 }}%
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if position.last_price_update %}
+                                            {{ position.last_price_update|date:"M d, H:i" }}
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'gt_position_detail' position_id=position.id %}" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'gt_edit_position' position_id=position.id %}" class="btn btn-sm btn-info">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'gt_delete_position' position_id=position.id %}" class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center">No positions in this category. <a href="{% url 'gt_add_position' %}">Add your first position</a>.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Refresh prices button
+        $('#refresh-prices-btn').click(function() {
+            $(this).prop('disabled', true);
+            $(this).html('<i class="fas fa-spinner fa-spin fa-sm text-white-50 mr-1"></i> Updating...');
+            
+            $.ajax({
+                url: '{% url "gt_update_prices" %}',
+                type: 'GET',
+                success: function(data) {
+                    if (data.success) {
+                        // Reload the page to show updated prices
+                        location.reload();
+                    } else {
+                        alert('Error updating prices: ' + data.message);
+                        $('#refresh-prices-btn').prop('disabled', false);
+                        $('#refresh-prices-btn').html('<i class="fas fa-sync fa-sm text-white-50 mr-1"></i> Refresh Prices');
+                    }
+                },
+                error: function() {
+                    alert('Error connecting to the server. Please try again.');
+                    $('#refresh-prices-btn').prop('disabled', false);
+                    $('#refresh-prices-btn').html('<i class="fas fa-sync fa-sm text-white-50 mr-1"></i> Refresh Prices');
+                }
+            });
+        });
+    });
+</script>
+{% endblock %} 

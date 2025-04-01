@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | StockStorm{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 30px;">
+    <div style="margin-bottom: 30px; text-align: center;">
+        <h1 style="font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ title }}</h1>
+    </div>
+    
+    <div style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 20px; max-width: 700px; margin: 0 auto; box-shadow: var(--shadow);">
+        <!-- Position info summary -->
+        {% if position %}
+        <div style="margin-bottom: 25px; padding: 15px; background-color: var(--dark-card); border-radius: var(--border-radius); border-left: 4px solid var(--neon-blue);">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 3px;">Position</div>
+                    <div style="font-weight: 600; color: var(--text-primary);">{{ position.ticker }}</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 3px;">Current Price</div>
+                    <div style="font-weight: 600; color: var(--text-primary);">
+                        {% if position.current_price %}
+                            ${{ position.current_price|floatformat:2 }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 3px;">Entry Price</div>
+                    <div style="font-weight: 600; color: var(--text-primary);">${{ position.entry_price|floatformat:2 }}</div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Telegram notification info -->
+        <div style="margin-bottom: 25px; padding: 15px; background-color: rgba(58, 134, 255, 0.1); border-radius: var(--border-radius); display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <i class="fab fa-telegram-plane" style="color: var(--neon-blue); font-size: 1.5rem;"></i>
+                <div style="flex: 1;">
+                    <div style="font-weight: 600; font-size: 1rem; color: var(--text-primary);">Telegram Notifications</div>
+                    {% if telegram_config and telegram_config.is_verified %}
+                        <div style="color: var(--neon-green); font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-check-circle"></i> Enabled
+                        </div>
+                    {% else %}
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; display: flex; align-items: center; gap: 5px;">
+                            <i class="fas fa-times-circle"></i> Not configured
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% if not telegram_config or not telegram_config.is_verified %}
+                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;">
+                    Configure Telegram in your <a href="{% url 'profile' %}" style="color: var(--neon-blue); text-decoration: none;">profile settings</a> to receive alert notifications.
+                </div>
+            {% endif %}
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 25px;">
+                <label for="{{ form.threshold_value.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Target Price ($)</label>
+                {{ form.threshold_value.as_widget|safe }}
+                <style>
+                    #{{ form.threshold_value.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.threshold_value.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.threshold_value.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.threshold_value.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label for="{{ form.alert_type.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Direction</label>
+                {{ form.alert_type.as_widget|safe }}
+                <style>
+                    #{{ form.alert_type.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.alert_type.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.alert_type.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.alert_type.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <label for="{{ form.notes.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Notes</label>
+                {{ form.notes.as_widget|safe }}
+                <style>
+                    #{{ form.notes.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        min-height: 100px;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.notes.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.notes.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.notes.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px;">
+                <a href="{% url 'position_detail' position.id %}" class="btn btn-outline" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

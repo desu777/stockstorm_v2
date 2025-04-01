@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | StockStorm{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 30px;">
+    <div style="margin-bottom: 30px; text-align: center;">
+        <h1 style="font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ title }}</h1>
+    </div>
+    
+    <div style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: var(--shadow);">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 25px;">
+                <label for="{{ form.name.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Category Name</label>
+                {{ form.name }}
+                <style>
+                    #{{ form.name.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.name.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.name.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.name.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <label for="{{ form.description.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Description</label>
+                {{ form.description }}
+                <style>
+                    #{{ form.description.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        min-height: 120px;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.description.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.description.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px;">
+                <a href="{% url 'gt:gt_position_list' %}" class="btn btn-outline" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

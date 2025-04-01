@@ -1,0 +1,392 @@
+{% extends "base.html" %}
+{% load static %}
+{% load humanize %}
+{% load gt_filters %}
+
+{% block title %}Stock Portfolio | StockStorm{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Action icons */
+    .action-icon {
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: color 0.2s;
+    }
+    .action-icon:hover {
+        color: var(--neon-blue);
+    }
+    
+    /* Delete icon animation */
+    .delete-icon {
+        position: relative;
+        z-index: 2;
+    }
+    
+    .delete-icon::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid var(--neon-red);
+        animation: pulse 1.5s infinite;
+        z-index: -1;
+    }
+    
+    /* PL styling */
+    .pl-positive { color: var(--neon-green) !important; }
+    .pl-neutral { color: #ffd700 !important; }
+    .pl-negative { color: var(--neon-red) !important; }
+    
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.4);
+        }
+        70% {
+            box-shadow: 0 0 0 5px rgba(220, 53, 69, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="font-size: 2.2rem; font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">Stock Portfolio</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'gt:gt_add_category' %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-folder-plus"></i> Add Category</a>
+            <a href="{% url 'gt:gt_add_position' %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-plus"></i> Add Position</a>
+            <button id="refresh-prices-btn" class="btn btn-outline" style="display: flex; align-items: center; gap: 5px;" 
+                   title="Click to update prices for all positions using Alpha Vantage API">
+                <i class="fas fa-sync-alt"></i> Update Prices
+            </button>
+        </div>
+    </div>
+    
+    <!-- Auto-refresh toggle -->
+    <div style="display: flex; align-items: center; margin-bottom: 20px; background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; box-shadow: var(--shadow);">
+        <div class="auto-refresh-control" style="display: flex; align-items: center; margin-right: 20px;">
+            <input type="checkbox" id="auto-refresh" checked style="margin-right: 8px;">
+            <label for="auto-refresh" style="color: var(--text-secondary); font-size: 0.9rem;">Auto-refresh (30s)</label>
+        </div>
+        <div style="color: var(--text-secondary); font-size: 0.9rem;">
+            Last updated: <span id="last-update-time">{% now "M d, Y H:i" %}</span>
+        </div>
+    </div>
+    
+    <!-- Portfolio Summary -->
+    <div class="portfolio-summary-card" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 25px; margin-bottom: 30px; box-shadow: var(--shadow);">
+        <h2 style="font-size: 1.5rem; margin-bottom: 20px; color: var(--text-primary); font-weight: 600;">Portfolio Summary</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Total Invested</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);">${{ total_invested|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Current Value</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);">${{ current_value|floatformat:2|intcomma }}</div>
+            </div>
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Total P/L</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: {% if total_profit_loss > 0 %}var(--neon-green){% elif total_profit_loss < 0 %}var(--neon-red){% else %}var(--text-primary){% endif %};">
+                    ${{ total_profit_loss|floatformat:2|intcomma }} ({{ profit_loss_percent|floatformat:2 }}%)
+                </div>
+            </div>
+            <div class="stat-card" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 20px; box-shadow: var(--shadow-sm);">
+                <div class="stat-title" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Positions</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 600; color: var(--text-primary);">{{ positions|length }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Categories and Positions -->
+    {% for category in categories %}
+    <div class="category-card" id="category-{{ category.id }}" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 25px; margin-bottom: 30px; box-shadow: var(--shadow);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h3 style="font-size: 1.4rem; color: var(--text-primary); font-weight: 600;">{{ category.name }}</h3>
+            <div style="display: flex; gap: 10px;">
+                <a href="{% url 'gt:gt_edit_category' category_id=category.id %}" class="btn btn-sm btn-outline" title="Edit Category" style="padding: 6px 10px; font-size: 0.85rem;"><i class="fas fa-edit"></i></a>
+                <a href="{% url 'gt:gt_delete_category' category_id=category.id %}" class="btn btn-sm btn-danger" title="Delete Category" style="padding: 6px 10px; font-size: 0.85rem; position: relative;"><i class="fas fa-trash delete-icon"></i></a>
+            </div>
+        </div>
+        
+        {% if category.description %}
+        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">{{ category.description }}</div>
+        {% endif %}
+        
+        <!-- Positions Table -->
+        <div style="overflow-x: auto; margin-bottom: 10px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                    <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1); text-align: left;">
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Ticker</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Quantity</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Entry Price</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Current Price</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Value</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">P/L $</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">P/L %</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Last Updated</th>
+                        <th style="padding: 12px 15px; color: var(--text-secondary);">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for position in positions %}
+                    {% if position.category_id == category.id %}
+                    <tr class="position-row" data-id="{{ position.id }}" style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                        <td style="padding: 12px 15px; color: var(--text-primary); font-weight: 500;">{{ position.ticker }}</td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);">{{ position.quantity }}</td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);">${{ position.entry_price|floatformat:2 }}</td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);" class="position-current-price">
+                            {% if position.current_price %}
+                                ${{ position.current_price|floatformat:2 }}
+                            {% else %}
+                                <span style="color: var(--text-secondary);">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px; color: var(--text-primary);" class="position-value">
+                            {% if position.current_price %}
+                                ${{ position.quantity|multiply:position.current_price|floatformat:2 }}
+                            {% else %}
+                                <span style="color: var(--text-secondary);">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px;" class="position-pnl-dollar {% if position.profit_loss_dollar > 0 %}pl-positive{% elif position.profit_loss_dollar < 0 %}pl-negative{% endif %}">
+                            {% if position.profit_loss_dollar is not None %}
+                                ${{ position.profit_loss_dollar|floatformat:2 }}
+                            {% else %}
+                                <span style="color: var(--text-secondary);">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px;" class="position-pnl-percent {% if position.profit_loss_percent > 0 %}pl-positive{% elif position.profit_loss_percent >= -30 %}pl-neutral{% else %}pl-negative{% endif %}">
+                            {% if position.profit_loss_percent is not None %}
+                                {{ position.profit_loss_percent|floatformat:2 }}%
+                            {% else %}
+                                <span style="color: var(--text-secondary);">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px; color: var(--text-secondary); font-size: 0.85rem;">
+                            {% if position.last_price_update %}
+                                {{ position.last_price_update|date:"M d, H:i" }}
+                            {% else %}
+                                <span style="color: var(--text-secondary);">Never</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 12px 15px;">
+                            <div style="display: flex; gap: 8px; justify-content: flex-start;">
+                                <a href="{% url 'gt:gt_position_detail' position_id=position.id %}" class="btn btn-sm btn-outline" title="View Details" style="padding: 6px 10px; font-size: 0.85rem;"><i class="fas fa-eye"></i></a>
+                                <a href="{% url 'gt:gt_edit_position' position_id=position.id %}" class="btn btn-sm btn-outline" title="Edit Position" style="padding: 6px 10px; font-size: 0.85rem;"><i class="fas fa-edit"></i></a>
+                                <a href="{% url 'gt:gt_delete_position' position_id=position.id %}" class="btn btn-sm btn-danger" title="Delete Position" style="padding: 6px 10px; font-size: 0.85rem; position: relative;"><i class="fas fa-trash delete-icon"></i></a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if not category.positions.exists %}
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 20px; color: var(--text-secondary);">
+                            No positions in this category. <a href="{% url 'gt:gt_add_position' %}" style="color: var(--neon-blue); text-decoration: none;">Add your first position</a>.
+                        </td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% empty %}
+    <div style="text-align: center; padding: 50px 0; background-color: var(--dark-surface); border-radius: var(--border-radius); box-shadow: var(--shadow);">
+        <h3 style="color: var(--text-primary); margin-bottom: 20px;">Welcome to StockStorm</h3>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">You haven't created any categories yet. Start by adding a category.</p>
+        <a href="{% url 'gt:gt_add_category' %}" class="btn btn-primary">Create Your First Category</a>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        let autoRefreshInterval;
+        const autoRefreshCheckbox = document.getElementById('auto-refresh');
+        
+        // Set up auto-refresh based on checkbox state
+        if (autoRefreshCheckbox) {
+            autoRefreshCheckbox.addEventListener('change', function() {
+                toggleAutoRefresh(this.checked);
+            });
+            
+            // Initialize auto-refresh
+            toggleAutoRefresh(autoRefreshCheckbox.checked);
+        }
+        
+        function toggleAutoRefresh(enabled) {
+            if (enabled) {
+                autoRefreshInterval = setInterval(updateAllPrices, 30000); // 30 seconds
+            } else {
+                clearInterval(autoRefreshInterval);
+            }
+        }
+        
+        // Get CSRF token
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        
+        // Function to update all prices via the API
+        function updateAllPrices() {
+            console.log('updateAllPrices function called');
+            
+            const updateBtn = document.getElementById('refresh-prices-btn');
+            updateBtn.disabled = true;
+            updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+            
+            fetch('/gt/api/update-prices/', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken'),
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({})
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log('Success response:', data);
+                if (data.success) {
+                    // Show success toast notification
+                    const toast = document.createElement('div');
+                    toast.className = 'toast-notification';
+                    toast.innerHTML = `
+                        <div style="position: fixed; top: 20px; right: 20px; background-color: var(--dark-card); border-left: 4px solid var(--neon-green); 
+                                    padding: 15px; border-radius: 5px; box-shadow: var(--shadow); z-index: 1000; max-width: 350px; display: flex; align-items: center; gap: 10px">
+                            <i class="fas fa-check-circle" style="color: var(--neon-green); font-size: 1.2rem;"></i>
+                            <div>
+                                <div style="color: var(--text-primary); font-weight: 500; margin-bottom: 5px">Prices Updated!</div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem">${data.message}</div>
+                                <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 5px">Time: ${data.elapsed_time || '0.00 seconds'}</div>
+                            </div>
+                        </div>
+                    `;
+                    document.body.appendChild(toast);
+                    
+                    // Reload the page to show updated prices
+                    setTimeout(() => {
+                        location.reload();
+                    }, 1500);
+                } else {
+                    alert('Error updating prices: ' + data.message);
+                    updateBtn.disabled = false;
+                    updateBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Prices';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error connecting to server. Please try again later.');
+                updateBtn.disabled = false;
+                updateBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Update Prices';
+            });
+        }
+        
+        // Function to handle manual price update
+        document.getElementById('refresh-prices-btn').addEventListener('click', function() {
+            console.log('Button clicked');
+            updateAllPrices();
+        });
+
+        // Sorting functionality
+        $('#sort-by-ticker').click(function(e) {
+            e.preventDefault();
+            sortTable(0, 'text');
+        });
+        
+        $('#sort-by-profit').click(function(e) {
+            e.preventDefault();
+            sortTable(6, 'number');
+        });
+        
+        $('#sort-by-value').click(function(e) {
+            e.preventDefault();
+            sortTable(5, 'number');
+        });
+        
+        function sortTable(column, type) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("positions-table");
+            switching = true;
+            dir = "asc";
+            
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("td")[column];
+                    y = rows[i + 1].getElementsByTagName("td")[column];
+                    
+                    if (type === 'text') {
+                        if (dir == "asc") {
+                            if (x.textContent.toLowerCase() > y.textContent.toLowerCase()) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        } else if (dir == "desc") {
+                            if (x.textContent.toLowerCase() < y.textContent.toLowerCase()) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        }
+                    } else if (type === 'number') {
+                        var xValue = parseFloat(x.textContent.replace(/[^0-9.-]+/g,""));
+                        var yValue = parseFloat(y.textContent.replace(/[^0-9.-]+/g,""));
+                        
+                        if (isNaN(xValue)) xValue = 0;
+                        if (isNaN(yValue)) yValue = 0;
+                        
+                        if (dir == "asc") {
+                            if (xValue > yValue) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        } else if (dir == "desc") {
+                            if (xValue < yValue) {
+                                shouldSwitch = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

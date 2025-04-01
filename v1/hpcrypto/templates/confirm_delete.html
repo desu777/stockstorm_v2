@@ -1,0 +1,30 @@
+<!-- confirm_delete.html -->
+{% extends "base.html" %}
+
+{% block title %}Confirm Delete | StockStorm{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 30px;">
+    <div style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 20px; max-width: 600px; margin: 0 auto; box-shadow: var(--shadow);">
+        <div style="text-align: center; margin-bottom: 25px;">
+            <h2 style="font-size: clamp(1.4rem, 4vw, 1.8rem); margin-bottom: 15px; color: var(--text-primary);">Confirm Delete</h2>
+            <p style="color: var(--text-secondary); font-size: clamp(0.95rem, 3vw, 1.1rem);">
+                Are you sure you want to delete "{{ object }}"?<br>
+                <span style="color: var(--neon-red); display: inline-block; margin-top: 10px; font-weight: 500;">This action cannot be undone.</span>
+            </p>
+        </div>
+        
+        <form method="post">
+            {% csrf_token %}
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px;">
+                <a href="{{ cancel_url }}" class="btn btn-outline" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-danger" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

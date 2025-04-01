@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Reset Password - StockStorm{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 40px 0;">
+    <div class="card" style="max-width: 450px; width: 100%; position: relative; overflow: hidden;">
+        <!-- Decorative elements -->
+        <div style="position: absolute; width: 200px; height: 200px; background: var(--primary-purple); filter: blur(80px); opacity: 0.15; top: -50px; right: -50px; z-index: 0; border-radius: 50%;"></div>
+        <div style="position: absolute; width: 200px; height: 200px; background: var(--primary-blue); filter: blur(80px); opacity: 0.15; bottom: -50px; left: -50px; z-index: 0; border-radius: 50%;"></div>
+        
+        <!-- Form content -->
+        <div style="position: relative; z-index: 1;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="font-size: 2rem; margin-bottom: 10px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                    Reset Password
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 1rem;">
+                    Enter your email to receive password reset instructions
+                </p>
+            </div>
+            
+            <form method="post" action="{% url 'forgot' %}">
+                {% csrf_token %}
+                
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <div style="position: relative;">
+                        <input type="email" name="email" id="email" class="form-control" style="padding-left: 45px;" required>
+                        <i class="fas fa-envelope" style="position: absolute; left: 15px; top: 15px; color: var(--text-secondary);"></i>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
+                    Send Reset Link
+                </button>
+                
+                <div style="text-align: center; color: var(--text-secondary); font-size: 0.95rem;">
+                    Remember your password? <a href="{% url 'login' %}" style="color: var(--primary-purple); text-decoration: none; font-weight: 500; transition: all 0.2s ease;">Sign in</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

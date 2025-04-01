@@ -1,0 +1,113 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - StockStorm{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 80vh; padding: 40px 0;">
+    <div class="card" style="max-width: 500px; width: 100%; position: relative; overflow: hidden;">
+        <!-- Decorative elements -->
+        <div style="position: absolute; width: 250px; height: 250px; background: var(--primary-purple); filter: blur(80px); opacity: 0.15; top: -80px; right: -80px; z-index: 0; border-radius: 50%;"></div>
+        <div style="position: absolute; width: 250px; height: 250px; background: var(--primary-blue); filter: blur(80px); opacity: 0.15; bottom: -80px; left: -80px; z-index: 0; border-radius: 50%;"></div>
+        
+        <!-- Form content -->
+        <div style="position: relative; z-index: 1;">
+            <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="font-size: 2rem; margin-bottom: 10px; font-weight: 700; font-family: 'Space Grotesk', sans-serif; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                    Create Your Account
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 1rem;">
+                    Join StockStorm to start automated crypto trading
+                </p>
+            </div>
+            
+            <form method="post" action="{% url 'register' %}">
+                {% csrf_token %}
+                
+                {% if form.non_field_errors %}
+                <div class="alert alert-danger">
+                    {{ form.non_field_errors }}
+                </div>
+                {% endif %}
+                
+                <div class="form-group">
+                    <label for="{{ form.username.id_for_label }}">Username</label>
+                    <div style="position: relative;">
+                        <input type="text" name="username" id="{{ form.username.id_for_label }}" class="form-control" style="padding-left: 45px;" value="{{ form.username.value|default:'' }}" required>
+                        <i class="fas fa-user" style="position: absolute; left: 15px; top: 15px; color: var(--text-secondary);"></i>
+                    </div>
+                    {% if form.username.errors %}
+                    <div style="color: #ff0053; font-size: 0.85rem; margin-top: 5px;">
+                        {{ form.username.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.email.id_for_label }}">Email</label>
+                    <div style="position: relative;">
+                        <input type="email" name="email" id="{{ form.email.id_for_label }}" class="form-control" style="padding-left: 45px;" value="{{ form.email.value|default:'' }}" required>
+                        <i class="fas fa-envelope" style="position: absolute; left: 15px; top: 15px; color: var(--text-secondary);"></i>
+                    </div>
+                    {% if form.email.errors %}
+                    <div style="color: #ff0053; font-size: 0.85rem; margin-top: 5px;">
+                        {{ form.email.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.password1.id_for_label }}">Password</label>
+                    <div style="position: relative;">
+                        <input type="password" name="password1" id="{{ form.password1.id_for_label }}" class="form-control" style="padding-left: 45px;" required>
+                        <i class="fas fa-lock" style="position: absolute; left: 15px; top: 15px; color: var(--text-secondary);"></i>
+                    </div>
+                    {% if form.password1.errors %}
+                    <div style="color: #ff0053; font-size: 0.85rem; margin-top: 5px;">
+                        {{ form.password1.errors }}
+                    </div>
+                    {% endif %}
+                    <div style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 5px;">
+                        Password must be at least 8 characters and contain letters and numbers.
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.password2.id_for_label }}">Confirm Password</label>
+                    <div style="position: relative;">
+                        <input type="password" name="password2" id="{{ form.password2.id_for_label }}" class="form-control" style="padding-left: 45px;" required>
+                        <i class="fas fa-lock" style="position: absolute; left: 15px; top: 15px; color: var(--text-secondary);"></i>
+                    </div>
+                    {% if form.password2.errors %}
+                    <div style="color: #ff0053; font-size: 0.85rem; margin-top: 5px;">
+                        {{ form.password2.errors }}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="register_key">Registration Key</label>
+                    <div style="position: relative;">
+                        <input type="text" name="register_key" id="register_key" class="form-control" style="padding-left: 45px;" required>
+                        <i class="fas fa-key" style="position: absolute; left: 15px; top: 15px; color: var(--text-secondary);"></i>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="display: flex; align-items: flex-start; gap: 10px; margin-bottom: 30px;">
+                    <input type="checkbox" id="terms" name="terms" style="width: 18px; height: 18px; margin-top: 3px; accent-color: var(--primary-purple);" required>
+                    <label for="terms" style="margin-bottom: 0; cursor: pointer; font-size: 0.9rem; color: var(--text-secondary);">
+                        I agree to the <a href="#" style="color: var(--primary-purple); text-decoration: none;">Terms of Service</a> and <a href="#" style="color: var(--primary-purple); text-decoration: none;">Privacy Policy</a>
+                    </label>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-bottom: 20px;">
+                    Create Account
+                </button>
+                
+                <div style="text-align: center; color: var(--text-secondary); font-size: 0.95rem;">
+                    Already have an account? <a href="{% url 'login' %}" style="color: var(--primary-purple); text-decoration: none; font-weight: 500; transition: all 0.2s ease;">Sign in</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %} 

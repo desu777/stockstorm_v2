@@ -1,0 +1,404 @@
+{% extends 'base.html' %}
+
+{% block title %}Your Bots - StockStorm{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .bot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+    
+    .bot-card {
+        background: var(--dark-card);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        min-height: 270px;
+    }
+    
+    .bot-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--neon-shadow-purple);
+    }
+    
+    .bot-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .bot-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        font-family: 'Space Grotesk', sans-serif;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .bot-status {
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-running {
+        background: rgba(0, 255, 170, 0.1);
+        color: #00ffaa;
+        border: 1px solid rgba(0, 255, 170, 0.3);
+    }
+    
+    .status-finished {
+        background: rgba(255, 218, 0, 0.1);
+        color: #ffda00;
+        border: 1px solid rgba(255, 218, 0, 0.3);
+    }
+    
+    .status-error {
+        background: rgba(255, 0, 83, 0.1);
+        color: #ff0053;
+        border: 1px solid rgba(255, 0, 83, 0.3);
+    }
+    
+    .status-new {
+        background: rgba(61, 132, 255, 0.1);
+        color: #3d84ff;
+        border: 1px solid rgba(61, 132, 255, 0.3);
+    }
+    
+    .bot-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 20px;
+        margin-bottom: 20px;
+    }
+    
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-size: 1rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .bot-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: auto;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    .btn-view {
+        background: rgba(138, 43, 226, 0.1);
+        color: var(--primary-purple);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        align-self: flex-start;
+    }
+    
+    .btn-view:hover {
+        background: rgba(138, 43, 226, 0.2);
+    }
+    
+    .btn-delete {
+        background: rgba(255, 0, 83, 0.1);
+        color: #ff0053;
+        border: 1px solid rgba(255, 0, 83, 0.3);
+    }
+    
+    .btn-delete:hover {
+        background: rgba(255, 0, 83, 0.2);
+    }
+    
+    .info-banner {
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 30px;
+        background: rgba(58, 134, 255, 0.1);
+        border: 1px solid rgba(58, 134, 255, 0.3);
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .info-icon {
+        color: var(--primary-blue);
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        margin-top: 3px;
+    }
+    
+    .info-content h3 {
+        color: var(--primary-blue);
+        margin-top: 0;
+        margin-bottom: 10px;
+        font-size: 1.2rem;
+    }
+    
+    .info-content p {
+        color: var(--text-secondary);
+        margin: 0;
+        font-size: 0.95rem;
+        line-height: 1.5;
+    }
+    
+    .bot-type-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 8px;
+        text-transform: uppercase;
+    }
+    
+    .bot-type-51015rei {
+        background: rgba(138, 43, 226, 0.15);
+        color: var(--primary-purple);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+    
+    .bot-type-51015 {
+        background: rgba(58, 134, 255, 0.15);
+        color: var(--primary-blue);
+        border: 1px solid rgba(58, 134, 255, 0.3);
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: var(--dark-card);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-secondary);
+        opacity: 0.3;
+        margin-bottom: 20px;
+    }
+    
+    .empty-title {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+    
+    .empty-text {
+        color: var(--text-secondary);
+        margin-bottom: 25px;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    @media (max-width: 768px) {
+        .bot-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .bot-card {
+            min-height: 300px;
+        }
+        
+        .bot-actions {
+            flex-direction: row;
+            width: 100%;
+        }
+        
+        .action-btn {
+            flex: 1;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin: 40px 0;">
+    <div class="page-header">
+        <h1 class="page-title">Bot 51015rei/51015</h1>
+        <a href="{% url 'bnb_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Bot
+        </a>
+    </div>
+    
+    <div class="info-banner">
+        <div class="info-icon">
+            <i class="fas fa-info-circle"></i>
+        </div>
+        <div class="info-content">
+            <h3>Two Bots Available</h3>
+            <p>Choose between two bot configurations:</p>
+            <ul style="margin-top: 8px; padding-left: 20px; color: var(--text-secondary);">
+                <li><strong>51015rei</strong> - Trading bot with reinvestment of profits</li>
+                <li><strong>51015</strong> - Standard trading bot without reinvestment</li>
+            </ul>
+        </div>
+    </div>
+    
+    {% if bots %}
+    <div class="bot-grid">
+        {% for bot in bots %}
+        <div class="bot-card">
+            <div class="bot-header">
+                <h3 class="bot-name">
+                    {{ bot.name }}
+                    {% if "51015rei" in bot.name %}
+                        <span class="bot-type-badge bot-type-51015rei">Reinvestment</span>
+                    {% else %}
+                        <span class="bot-type-badge bot-type-51015">Standard</span>
+                    {% endif %}
+                </h3>
+                <span class="bot-status status-{{ bot.status|lower }}">{{ bot.status }}</span>
+            </div>
+            
+            <div class="bot-details">
+                <div class="detail-item">
+                    <span class="detail-label">Symbol</span>
+                    <span class="detail-value">{{ bot.instrument }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Capital</span>
+                    <span class="detail-value">${{ bot.capital }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Created</span>
+                    <span class="detail-value">{{ bot.created_at|date:"M d, Y" }}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Bot Type</span>
+                    <span class="detail-value">
+                        {% if "51015rei" in bot.name %}
+                            51015rei (Reinvestment)
+                        {% else %}
+                            51015 (Standard)
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+            
+            <div class="bot-actions">
+                <a href="{% url 'bnb_detail' bot.id %}" class="action-btn btn-view">
+                    <i class="fas fa-eye"></i> View Details
+                </a>
+                <a href="{% url 'bnb_delete' bot.id %}" class="action-btn btn-delete">
+                    <i class="fas fa-trash-alt"></i> Delete
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-icon">
+            <i class="fas fa-robot"></i>
+        </div>
+        <h3 class="empty-title">No Trading Bots Yet</h3>
+        <p class="empty-text">You haven't created any trading bots yet. Choose between 51015rei (with reinvestment) or 51015 (without reinvestment) to automate your crypto trading.</p>
+        <a href="{% url 'bnb_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Your First Bot
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Filter functionality
+        const filterButtons = document.querySelectorAll('.filter-btn');
+        const botCards = document.querySelectorAll('.bot-card');
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                const filter = this.dataset.filter;
+                
+                botCards.forEach(card => {
+                    if (filter === 'all' || card.dataset.status === filter) {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Auto-refresh bot status every 30 seconds
+        setInterval(function() {
+            botCards.forEach(function(card) {
+                const botId = card.dataset.botId;
+                if (botId) {
+                    fetch(`/bnb/${botId}/status/`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status) {
+                                const statusElement = card.querySelector('.bot-status');
+                                statusElement.className = `bot-status status-${data.status.toLowerCase()}`;
+                                statusElement.textContent = data.status;
+                                
+                                // Update the card's status data attribute
+                                card.dataset.status = data.status.toLowerCase();
+                            }
+                        })
+                        .catch(error => console.error('Error updating bot status:', error));
+                }
+            });
+        }, 30000);
+    });
+</script>
+{% endblock %} 

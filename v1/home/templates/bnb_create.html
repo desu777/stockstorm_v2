@@ -1,0 +1,390 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Bot - StockStorm{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        margin-bottom: 30px;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin-bottom: 10px;
+    }
+    
+    .page-description {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+        max-width: 800px;
+    }
+    
+    .create-form {
+        background: var(--dark-surface);
+        border-radius: var(--border-radius);
+        padding: 30px;
+        margin-bottom: 40px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: var(--shadow);
+        max-width: 700px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .form-group {
+        margin-bottom: 25px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 10px;
+        color: var(--text-primary);
+        font-weight: 500;
+        font-size: 1rem;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background-color: var(--dark-card);
+        color: var(--text-primary);
+        font-size: 1rem;
+        transition: all 0.3s ease;
+    }
+    
+    .form-control:focus {
+        border-color: var(--primary-purple);
+        box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
+        outline: none;
+    }
+    
+    .form-help {
+        color: var(--text-secondary);
+        font-size: 0.85rem;
+        margin-top: 5px;
+    }
+    
+    .form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+        gap: 15px;
+        margin-top: 40px;
+    }
+    
+    .btn-cancel {
+        background: transparent;
+        border: 1px solid var(--text-secondary);
+        color: var(--text-primary);
+    }
+    
+    .btn-cancel:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+    
+    .info-banner {
+        background: rgba(58, 134, 255, 0.1);
+        border: 1px solid rgba(58, 134, 255, 0.3);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        margin-bottom: 25px;
+        display: flex;
+        align-items: flex-start;
+        gap: 15px;
+    }
+    
+    .info-icon {
+        font-size: 1.5rem;
+        color: var(--primary-blue);
+        flex-shrink: 0;
+        margin-top: 3px;
+    }
+    
+    .info-content {
+        flex: 1;
+    }
+    
+    .info-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: var(--primary-blue);
+    }
+    
+    .info-text {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        margin: 0;
+    }
+    
+    .bot-type-selector {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 25px;
+    }
+    
+    .bot-type-option {
+        background: var(--dark-card);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        border-radius: var(--border-radius);
+        padding: 20px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+    }
+    
+    .bot-type-option:hover {
+        border-color: rgba(138, 43, 226, 0.5);
+        transform: translateY(-2px);
+    }
+    
+    .bot-type-option.selected {
+        border-color: var(--primary-purple);
+        box-shadow: 0 0 0 2px rgba(138, 43, 226, 0.2);
+    }
+    
+    .bot-type-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 10px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .bot-type-description {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+    
+    .bot-type-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: auto;
+        text-transform: uppercase;
+    }
+    
+    .bot-type-rei {
+        background: rgba(138, 43, 226, 0.15);
+        color: var(--primary-purple);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+    
+    .bot-type-standard {
+        background: rgba(58, 134, 255, 0.15);
+        color: var(--primary-blue);
+        border: 1px solid rgba(58, 134, 255, 0.3);
+    }
+    
+    @media (max-width: 768px) {
+        .form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .form-actions {
+            flex-direction: column-reverse;
+        }
+        
+        .form-actions .btn {
+            width: 100%;
+        }
+        
+        .bot-type-selector {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin: 40px 0;">
+    <div class="page-header">
+        <h1 class="page-title">Create a New Bot</h1>
+        <p class="page-description">Set up a trading bot with your desired parameters to begin automated trading.</p>
+    </div>
+    
+    <div class="create-form">
+        <div class="info-banner">
+            <div class="info-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="info-content">
+                <h3 class="info-title">Choose Bot Type</h3>
+                <p class="info-text">Select between two trading bot configurations based on your investment strategy:</p>
+                <ul style="padding-left: 20px; margin-top: 10px; color: var(--text-secondary);">
+                    <li><strong>51015rei</strong> - Automatically reinvests profits for compound growth</li>
+                    <li><strong>51015</strong> - Standard trading without automatic reinvestment</li>
+                </ul>
+            </div>
+        </div>
+        
+        <form method="post" id="createBotForm">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                <label>Choose Bot Type</label>
+                <div class="bot-type-selector">
+                    <div class="bot-type-option" id="bot-type-51015rei" onclick="selectBotType('51015rei')">
+                        <div class="bot-type-title">
+                            <i class="fas fa-sync-alt"></i> 51015rei
+                            <span class="bot-type-badge bot-type-rei">Reinvestment</span>
+                        </div>
+                        <div class="bot-type-description">Trading bot that automatically reinvests profits for compound growth.</div>
+                        <div style="color: var(--neon-blue); font-size: 0.85rem;"><i class="fas fa-check-circle"></i> Includes automatic reinvestment</div>
+                    </div>
+                    
+                    <div class="bot-type-option" id="bot-type-51015" onclick="selectBotType('51015')">
+                        <div class="bot-type-title">
+                            <i class="fas fa-robot"></i> 51015
+                            <span class="bot-type-badge bot-type-standard">Standard</span>
+                        </div>
+                        <div class="bot-type-description">Standard trading bot without automatic reinvestment of profits.</div>
+                        <div style="color: var(--text-secondary); font-size: 0.85rem;"><i class="fas fa-info-circle"></i> Manual control over profits</div>
+                    </div>
+                </div>
+                <input type="hidden" name="bot_type" id="bot_type_input" value="51015rei">
+            </div>
+            
+            <div class="form-group">
+                <label for="name">Bot Name</label>
+                <div style="display: flex; align-items: center;">
+                    <div id="botNamePrefix" style="background-color: rgba(255, 255, 255, 0.05); padding: 12px 15px; border-radius: var(--border-radius) 0 0 var(--border-radius); border: 1px solid rgba(255, 255, 255, 0.1); border-right: none; color: var(--text-secondary); font-size: 1rem;">51015rei-</div>
+                    <input type="text" name="name" id="name" class="form-control" style="border-radius: 0 var(--border-radius) var(--border-radius) 0;" placeholder="your-bot-name" required>
+                    <input type="hidden" name="full_name" id="full_name">
+                </div>
+                <div class="form-help">Give your bot a recognizable name. The prefix is determined by the selected bot type.</div>
+            </div>
+            
+            <!-- Trading Parameters Section -->
+            <div style="margin-top: 30px; margin-bottom: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px;">
+                <h3 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--text-primary);">Trading Parameters</h3>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="instrument">Trading Symbol</label>
+                        <input type="text" name="instrument" id="instrument" class="form-control" placeholder="e.g., BTCUSDC, ETHUSDC" required>
+                        <div class="form-help">Enter the trading pair exactly as shown on Binance.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="capital">Capital</label>
+                        <input type="number" name="capital" id="capital" class="form-control" placeholder="Enter your trading capital" min="1" step="0.01" required>
+                        <div class="form-help">The amount of capital to allocate to this bot.</div>
+                    </div>
+                </div>
+                
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="max_price">Max Price</label>
+                        <input type="number" name="max_price" id="max_price" class="form-control" placeholder="Enter maximum price limit" min="1" step="0.01" required>
+                        <div class="form-help">The maximum price limit for trading operations.</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="percent">Percent (%)</label>
+                        <input type="number" name="percent" id="percent" class="form-control" placeholder="e.g., 10" min="0.1" max="100" step="0.1" required>
+                        <div class="form-help">Percentage change to trigger a trade.</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="decimals">Decimals for Price</label>
+                    <input type="number" name="decimals" id="decimals" class="form-control" placeholder="e.g., 2" min="0" max="8" required>
+                    <div class="form-help">Number of decimal places for price calculations.</div>
+                </div>
+            </div>
+            
+            <!-- API Credentials Section -->
+            <div style="margin-top: 30px; margin-bottom: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1); padding-top: 20px;">
+                <h3 style="font-size: 1.2rem; margin-bottom: 20px; color: var(--text-primary);">API Credentials</h3>
+                
+                <div class="form-group">
+                    <label for="binance_api_key">Binance API Key</label>
+                    <input type="text" name="binance_api_key" id="binance_api_key" class="form-control" placeholder="Enter your Binance API key" required>
+                    <div class="form-help">Your Binance API key (keep this secure).</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="binance_api_secret">Binance API Secret</label>
+                    <input type="password" name="binance_api_secret" id="binance_api_secret" class="form-control" placeholder="Enter your Binance API secret" required>
+                    <div class="form-help">Your Binance API secret (keep this secure).</div>
+                </div>
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url 'bnb_list' %}" class="btn btn-cancel">Cancel</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Create Bot
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Function to select bot type
+    function selectBotType(type) {
+        // Remove selected class from all options
+        document.querySelectorAll('.bot-type-option').forEach(option => {
+            option.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked option
+        document.getElementById('bot-type-' + type).classList.add('selected');
+        
+        // Set the hidden input value
+        document.getElementById('bot_type_input').value = type;
+        
+        // Update the prefix based on selected bot type
+        const prefix = type + '-';
+        document.getElementById('botNamePrefix').textContent = prefix;
+        
+        // Clear the name field to ensure a fresh entry
+        document.getElementById('name').value = '';
+    }
+    
+    // Initialize the form with default selection
+    document.addEventListener('DOMContentLoaded', function() {
+        selectBotType('51015rei');
+        
+        // Handle form submission to combine prefix and name
+        const form = document.getElementById('createBotForm');
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const prefix = document.getElementById('botNamePrefix').textContent;
+            const nameField = document.getElementById('name');
+            const fullNameField = document.getElementById('full_name');
+            
+            // Combine the prefix and user-entered name
+            fullNameField.value = prefix + nameField.value;
+            
+            // Set the actual name field to the full name for proper form submission
+            nameField.value = fullNameField.value;
+            
+            // Submit the form
+            this.submit();
+        });
+    });
+</script>
+{% endblock %} 

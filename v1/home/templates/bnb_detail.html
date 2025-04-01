@@ -1,0 +1,852 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ bot.name }} - StockStorm{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 30px;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+    
+    .page-title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin: 0;
+    }
+    
+    .bot-status {
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-running {
+        background: rgba(0, 255, 170, 0.1);
+        color: #00ffaa;
+        border: 1px solid rgba(0, 255, 170, 0.3);
+    }
+    
+    .status-finished {
+        background: rgba(255, 218, 0, 0.1);
+        color: #ffda00;
+        border: 1px solid rgba(255, 218, 0, 0.3);
+    }
+    
+    .status-error {
+        background: rgba(255, 0, 83, 0.1);
+        color: #ff0053;
+        border: 1px solid rgba(255, 0, 83, 0.3);
+    }
+    
+    .status-new {
+        background: rgba(61, 132, 255, 0.1);
+        color: #3d84ff;
+        border: 1px solid rgba(61, 132, 255, 0.3);
+    }
+    
+    .bot-type-badge {
+        display: inline-block;
+        padding: 5px 12px;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        margin-left: 15px;
+        text-transform: uppercase;
+    }
+    
+    .bot-type-51015rei {
+        background: rgba(138, 43, 226, 0.15);
+        color: var(--primary-purple);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+    
+    .bot-type-51015 {
+        background: rgba(58, 134, 255, 0.15);
+        color: var(--primary-blue);
+        border: 1px solid rgba(58, 134, 255, 0.3);
+    }
+    
+    .detail-grid {
+        display: grid;
+        grid-template-columns: 60% 40%;
+        gap: 30px;
+        margin-top: 30px;
+    }
+    
+    .bot-card {
+        background: var(--dark-surface);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        box-shadow: var(--shadow);
+        margin-bottom: 30px;
+    }
+    
+    .card-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        margin-bottom: 20px;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .card-title i {
+        color: var(--primary-purple);
+    }
+    
+    .bot-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .detail-item {
+        margin-bottom: 20px;
+    }
+    
+    .detail-label {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .bot-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 10px 20px;
+        font-size: 0.9rem;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 500;
+        text-decoration: none;
+    }
+    
+    .btn-primary {
+        background: var(--primary-blue);
+        color: white;
+        border: none;
+    }
+    
+    .btn-secondary {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: var(--text-primary);
+    }
+    
+    .btn-success {
+        background: var(--primary-green);
+        color: white;
+        border: none;
+    }
+    
+    .btn-warning {
+        background: var(--primary-yellow);
+        color: white;
+        border: none;
+    }
+    
+    .btn-delete {
+        background: rgba(255, 0, 83, 0.1);
+        color: #ff0053;
+        border: 1px solid rgba(255, 0, 83, 0.3);
+    }
+    
+    .btn-delete:hover {
+        background: rgba(255, 0, 83, 0.2);
+    }
+    
+    .history-list {
+        max-height: 400px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2);
+    }
+    
+    .history-list::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .history-list::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+    }
+    
+    .history-list::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+    
+    .history-list::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .history-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .history-item:last-child {
+        border-bottom: none;
+    }
+    
+    .history-icon {
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        flex-shrink: 0;
+    }
+    
+    .history-icon.success {
+        background: rgba(0, 255, 170, 0.1);
+        color: #00ffaa;
+    }
+    
+    .history-icon.error {
+        background: rgba(255, 0, 83, 0.1);
+        color: #ff0053;
+    }
+    
+    .history-icon.warning {
+        background: rgba(255, 218, 0, 0.1);
+        color: #ffda00;
+    }
+    
+    .history-icon.info {
+        background: rgba(61, 132, 255, 0.1);
+        color: #3d84ff;
+    }
+    
+    .history-content {
+        flex-grow: 1;
+    }
+    
+    .history-message {
+        font-size: 0.95rem;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+    }
+    
+    .history-timestamp {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
+    .trades-list {
+        max-height: 400px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.3) rgba(0, 0, 0, 0.2);
+    }
+    
+    .trades-list::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    .trades-list::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 10px;
+    }
+    
+    .trades-list::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.3);
+        border-radius: 10px;
+    }
+    
+    .trades-list::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(255, 255, 255, 0.5);
+    }
+    
+    .trade-item {
+        padding: 15px;
+        border-radius: var(--border-radius);
+        background: rgba(0, 0, 0, 0.2);
+        margin-bottom: 15px;
+    }
+    
+    .trade-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    
+    .trade-type {
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .trade-type.buy {
+        background: rgba(0, 255, 170, 0.1);
+        color: #00ffaa;
+        border: 1px solid rgba(0, 255, 170, 0.3);
+    }
+    
+    .trade-type.sell {
+        background: rgba(255, 0, 83, 0.1);
+        color: #ff0053;
+        border: 1px solid rgba(255, 0, 83, 0.3);
+    }
+    
+    .trade-date {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+    }
+    
+    .trade-details {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+    }
+    
+    .trade-detail {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .trade-detail-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 3px;
+    }
+    
+    .trade-detail-value {
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+    
+    /* Nowe style dla tabeli poziomów handlowych */
+    .trading-levels {
+        width: 100%;
+        overflow-x: auto;
+        margin-top: 20px;
+        margin-bottom: 25px;
+    }
+    
+    .levels-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 1rem;
+    }
+    
+    .levels-table th {
+        background: rgba(0, 0, 0, 0.2);
+        padding: 15px 20px;
+        text-align: left;
+        color: var(--text-secondary);
+        font-weight: 500;
+    }
+    
+    .levels-table td {
+        padding: 15px 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .level-active {
+        background: rgba(0, 255, 170, 0.05);
+    }
+    
+    .level-status {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .level-status.bought {
+        background: rgba(0, 255, 170, 0.1);
+        color: #00ffaa;
+        border: 1px solid rgba(0, 255, 170, 0.3);
+    }
+    
+    .level-status.waiting {
+        background: rgba(255, 218, 0, 0.1);
+        color: #ffda00;
+        border: 1px solid rgba(255, 218, 0, 0.3);
+    }
+    
+    .levels-summary {
+        margin-top: 20px;
+        display: flex;
+        justify-content: flex-end;
+    }
+    
+    .summary-item {
+        padding: 15px 20px;
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        display: flex;
+        align-items: center;
+    }
+    
+    .summary-label {
+        font-weight: 500;
+        margin-right: 15px;
+        font-size: 1.1rem;
+    }
+    
+    .summary-value.profit {
+        color: var(--neon-green);
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    @media (max-width: 992px) {
+        .detail-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .bot-details {
+            grid-template-columns: 1fr;
+        }
+        
+        .trade-details {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .trade-details {
+            grid-template-columns: 1fr;
+        }
+    }
+    
+    /* Add visual enhancements to the Trading Levels table */
+    .levels-table tr:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+        transition: background-color 0.3s ease;
+    }
+    
+    .levels-table th:first-child,
+    .levels-table td:first-child {
+        border-top-left-radius: 4px;
+        border-bottom-left-radius: 4px;
+    }
+    
+    .levels-table th:last-child,
+    .levels-table td:last-child {
+        border-top-right-radius: 4px;
+        border-bottom-right-radius: 4px;
+    }
+    
+    .profit-positive {
+        color: #00ffaa;
+        font-weight: 600;
+    }
+    
+    .profit-zero {
+        color: var(--text-secondary);
+    }
+    
+    /* Styl dla tooltipa z informacją o ID bota */
+    .tooltip-text {
+        position: relative;
+        display: inline-block;
+        font-size: 0.8rem;
+        color: #b3b3cc;
+        font-style: italic;
+        margin-left: 8px;
+    }
+    
+    /* Podświetlenie ID bota */
+    .detail-item .detail-value {
+        display: flex;
+        align-items: center;
+    }
+    
+    .bot-id-value {
+        background: rgba(138, 43, 226, 0.1);
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-family: monospace;
+        color: #8a2be2;
+        font-weight: 600;
+        margin-right: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin: 40px 0;">
+    <div class="page-header">
+        <div class="page-title-wrapper">
+            <h1 class="page-title">{{ bot.name }}</h1>
+            <span class="bot-status status-{{ bot.status|lower }}">{{ bot.status }}</span>
+            {% if is_rei_bot %}
+                <span class="bot-type-badge bot-type-51015rei">Z reinwestycją</span>
+            {% else %}
+                <span class="bot-type-badge bot-type-51015">Bez reinwestycji</span>
+            {% endif %}
+        </div>
+        
+        <div class="bot-actions">
+            <button id="refreshBtn" class="action-btn btn-success">
+                <i class="fas fa-sync-alt"></i> Refresh Data
+            </button>
+            <a href="{% url 'bnb_list' %}" class="action-btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to List
+            </a>
+            <a href="{% url 'bnb_delete' bot.id %}" class="action-btn btn-delete">
+                <i class="fas fa-trash-alt"></i> Delete Bot
+            </a>
+        </div>
+    </div>
+    
+    <div class="detail-grid">
+        <div>
+            <div class="bot-card">
+                <h2 class="card-title">
+                    <i class="fas fa-info-circle"></i> Bot Information
+                </h2>
+                
+                <div class="bot-details">
+                    <div class="detail-item">
+                        <div class="detail-label">Trading Pair</div>
+                        <div class="detail-value">{{ bot.instrument }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Broker</div>
+                        <div class="detail-value">{{ bot.get_broker_type_display }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Capital</div>
+                        <div class="detail-value">${{ bot.capital }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Maximum Buy Price</div>
+                        <div class="detail-value">${{ bot.max_price }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Target Profit</div>
+                        <div class="detail-value">{{ bot.percent }}%</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Created</div>
+                        <div class="detail-value">{{ bot.created_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Last Updated</div>
+                        <div class="detail-value">{{ bot.updated_at|date:"M d, Y H:i" }}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Active</div>
+                        <div class="detail-value">{% if bot.is_active %}Yes{% else %}No{% endif %}</div>
+                    </div>
+                    
+                    <div class="detail-item">
+                        <div class="detail-label">Bot ID</div>
+                        <div class="detail-value">{{ bot.id }} <span class="tooltip-text">(Użyj tego ID, gdy chcesz wygenerować wykres dla tego bota)</span></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bot-card">
+                <h2 class="card-title">
+                    <i class="fas fa-layer-group"></i> Trading Levels
+                    <span style="margin-left: 15px; font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);">Trading data for {{ bot.instrument }}</span>
+                </h2>
+                
+                <div class="trading-levels">
+                    <table class="levels-table">
+                        <thead>
+                            <tr>
+                                <th>Level</th>
+                                <th>Price</th>
+                                <th>Capital</th>
+                                <th>TP Count</th>
+                                <th>Profit</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for level in trading_levels %}
+                            <tr class="{% if level.is_bought %}level-active{% endif %}">
+                                <td>{{ level.name|upper }}</td>
+                                <td>${{ level.price }}</td>
+                                <td>${{ level.capital }}</td>
+                                <td>{{ level.tp|default:"0" }}</td>
+                                <td class="{% if level.profit > 0 %}profit-positive{% else %}profit-zero{% endif %}">${{ level.profit|default:"0.00" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="levels-summary">
+                    <div class="summary-item">
+                        <span class="summary-label">Total Profit:</span>
+                        <span class="summary-value profit">${{ total_profit }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div>
+            <div class="bot-card">
+                <h2 class="card-title">
+                    <i class="fas fa-history"></i> Status History
+                </h2>
+                
+                <div class="history-list">
+                    {% if bot_logs %}
+                        {% for log in bot_logs|slice:":3" %}
+                        <div class="history-item">
+                            <div class="history-icon {% if 'error' in log.message|lower %}error{% elif 'success' in log.message|lower %}success{% elif 'warning' in log.message|lower %}warning{% else %}info{% endif %}">
+                                <i class="fas {% if 'error' in log.message|lower %}fa-exclamation-circle{% elif 'success' in log.message|lower %}fa-check-circle{% elif 'warning' in log.message|lower %}fa-exclamation-triangle{% else %}fa-info-circle{% endif %}"></i>
+                            </div>
+                            <div class="history-content">
+                                <div class="history-message">{{ log.message }}</div>
+                                <div class="history-timestamp">{{ log.created_at|date:"M d, Y H:i:s" }}</div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="history-item">
+                            <div class="history-icon info">
+                                <i class="fas fa-info-circle"></i>
+                            </div>
+                            <div class="history-content">
+                                <div class="history-message">No activity logged yet</div>
+                                <div class="history-timestamp">{{ bot.created_at|date:"M d, Y H:i" }}</div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="bot-card">
+                <h2 class="card-title">
+                    <i class="fas fa-exchange-alt"></i> Recent Trades
+                    <a href="/bnb/{{ bot.id }}/export_trades/" class="action-btn btn-secondary" style="margin-left: auto; font-size: 0.8rem; padding: 5px 12px; text-decoration: none;">
+                        <i class="fas fa-file-download"></i> Download CSV
+                    </a>
+                </h2>
+                
+                <div class="trades-list">
+                    {% if recent_trades %}
+                        {% for trade in recent_trades|slice:":3" %}
+                        <div class="trade-item">
+                            <div class="trade-header">
+                                <div class="trade-type {{ trade.side|lower }}">{{ trade.side|upper }}</div>
+                                <div class="trade-date">{{ trade.created_at|date:"M d, Y H:i" }}</div>
+                            </div>
+                            <div class="trade-details">
+                                <div class="trade-detail">
+                                    <span class="trade-detail-label">Level</span>
+                                    <span class="trade-detail-value">{{ trade.level|upper }}</span>
+                                </div>
+                                <div class="trade-detail">
+                                    <span class="trade-detail-label">Quantity</span>
+                                    <span class="trade-detail-value">{{ trade.quantity }}</span>
+                                </div>
+                                {% if trade.side == 'BUY' %}
+                                <div class="trade-detail">
+                                    <span class="trade-detail-label">Price</span>
+                                    <span class="trade-detail-value">${{ trade.open_price }}</span>
+                                </div>
+                                {% else %}
+                                <div class="trade-detail">
+                                    <span class="trade-detail-label">Open Price</span>
+                                    <span class="trade-detail-value">${{ trade.open_price }}</span>
+                                </div>
+                                <div class="trade-detail">
+                                    <span class="trade-detail-label">Close Price</span>
+                                    <span class="trade-detail-value">${{ trade.close_price }}</span>
+                                </div>
+                                <div class="trade-detail">
+                                    <span class="trade-detail-label">Profit</span>
+                                    <span class="trade-detail-value" style="color: #00ffaa">${{ trade.profit }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div style="text-align: center; padding: 20px 0; color: var(--text-secondary);">
+                            No trades executed yet
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if debug_info %}
+    <div class="bot-card" style="margin-top: 30px;">
+        <h2 class="card-title">
+            <i class="fas fa-bug"></i> Debug Information
+        </h2>
+        
+        <div style="background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: var(--border-radius); overflow: auto; max-height: 500px;">
+            <h3>URL</h3>
+            <p>{{ debug_info.full_url }}</p>
+            
+            <h3>Status Code</h3>
+            <p>{{ debug_info.status_code }}</p>
+            
+            {% if debug_info.exception %}
+            <h3>Exception</h3>
+            <pre>{{ debug_info.exception }}</pre>
+            {% endif %}
+            
+            {% if debug_info.error_response %}
+            <h3>Error Response</h3>
+            <pre>{{ debug_info.error_response }}</pre>
+            {% endif %}
+            
+            {% if debug_info.raw_response %}
+            <h3>Raw Response</h3>
+            <pre>{{ debug_info.raw_response }}</pre>
+            {% endif %}
+            
+            {% if debug_info.levels_data %}
+            <h3>Levels Data</h3>
+            <pre>{{ debug_info.levels_data }}</pre>
+            {% endif %}
+            
+            {% if debug_info.runtime_data %}
+            <h3>Runtime Data</h3>
+            <pre>{{ debug_info.runtime_data }}</pre>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Przycisk odświeżania danych
+        const refreshBtn = document.getElementById('refreshBtn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function() {
+                this.disabled = true;
+                this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Refreshing...';
+                
+                // Wywołaj endpoint do ręcznego odświeżenia danych bota
+                fetch('/bnb/{{ bot.id }}/refresh/', { 
+                    method: 'POST',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Odśwież stronę, aby pokazać nowe dane
+                        location.reload();
+                    } else {
+                        alert('Error refreshing data: ' + data.error);
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+                    }
+                })
+                .catch(error => {
+                    console.error('Error refreshing bot data:', error);
+                    this.disabled = false;
+                    this.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+                });
+            });
+        }
+        
+        // Auto-refresh co 15 sekund
+        function refreshBotData() {
+            fetch('/bnb/{{ bot.id }}/status/', { 
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status) {
+                    // Update status badge
+                    const statusElement = document.querySelector('.bot-status');
+                    statusElement.className = `bot-status status-${data.status.toLowerCase()}`;
+                    statusElement.textContent = data.status;
+                    
+                    // Reload page if status changed to see updated info
+                    if (statusElement.textContent !== '{{ bot.status }}') {
+                        location.reload();
+                    }
+                }
+            })
+            .catch(error => console.error('Error updating bot status:', error));
+        }
+        
+        // Refresh bot status every 15 seconds
+        setInterval(refreshBotData, 15000);
+        
+        // First call to initialize
+        refreshBotData();
+        
+        // Funkcja pomocnicza do pobierania wartości ciasteczka (np. CSRF token)
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    });
+</script>
+{% endblock %} 

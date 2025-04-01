@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} | StockStorm{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 30px;">
+    <div style="margin-bottom: 30px; text-align: center;">
+        <h1 style="font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">{{ title }}</h1>
+    </div>
+    
+    <div style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 20px; max-width: 700px; margin: 0 auto; box-shadow: var(--shadow);">
+        <form method="post">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 25px;">
+                <label for="{{ form.category.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Category</label>
+                {{ form.category }}
+                <style>
+                    #{{ form.category.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.category.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.category.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.category.errors }}</div>
+                {% endif %}
+                <small style="margin-top: 5px; font-size: 0.85rem; color: var(--text-secondary);">Select a category or <a href="{% url 'gt:gt_add_category' %}" target="_blank" style="color: var(--neon-blue); text-decoration: none;">create a new one</a></small>
+            </div>
+            
+            <div style="margin-bottom: 25px;">
+                <label for="{{ form.ticker.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Stock Symbol (Ticker)</label>
+                {{ form.ticker }}
+                <style>
+                    #{{ form.ticker.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.ticker.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.ticker.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.ticker.errors }}</div>
+                {% endif %}
+                <div style="margin-top: 5px; font-size: 0.85rem; color: var(--text-secondary);">Enter the stock symbol (e.g., AAPL for Apple Inc.)</div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px;">
+                <div>
+                    <label for="{{ form.quantity.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Quantity</label>
+                    {{ form.quantity }}
+                    <style>
+                        #{{ form.quantity.id_for_label }} {
+                            width: 100%;
+                            padding: 12px 15px;
+                            background-color: var(--dark-card);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: var(--border-radius);
+                            color: var(--text-primary);
+                            font-size: 1rem;
+                            transition: border-color 0.2s ease;
+                        }
+                        #{{ form.quantity.id_for_label }}:focus {
+                            border-color: var(--neon-blue);
+                            outline: none;
+                            box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                        }
+                    </style>
+                    {% if form.quantity.errors %}
+                        <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.quantity.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.entry_price.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Entry Price ($)</label>
+                    {{ form.entry_price }}
+                    <style>
+                        #{{ form.entry_price.id_for_label }} {
+                            width: 100%;
+                            padding: 12px 15px;
+                            background-color: var(--dark-card);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: var(--border-radius);
+                            color: var(--text-primary);
+                            font-size: 1rem;
+                            transition: border-color 0.2s ease;
+                        }
+                        #{{ form.entry_price.id_for_label }}:focus {
+                            border-color: var(--neon-blue);
+                            outline: none;
+                            box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                        }
+                    </style>
+                    {% if form.entry_price.errors %}
+                        <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.entry_price.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.exit_price.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Exit Price ($)</label>
+                    {{ form.exit_price }}
+                    <style>
+                        #{{ form.exit_price.id_for_label }} {
+                            width: 100%;
+                            padding: 12px 15px;
+                            background-color: var(--dark-card);
+                            border: 1px solid rgba(255, 255, 255, 0.1);
+                            border-radius: var(--border-radius);
+                            color: var(--text-primary);
+                            font-size: 1rem;
+                            transition: border-color 0.2s ease;
+                        }
+                        #{{ form.exit_price.id_for_label }}:focus {
+                            border-color: var(--neon-blue);
+                            outline: none;
+                            box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                        }
+                    </style>
+                    {% if form.exit_price.errors %}
+                        <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.exit_price.errors }}</div>
+                    {% endif %}
+                    {% if form.exit_price.help_text %}
+                        <div style="margin-top: 5px; font-size: 0.85rem; color: var(--text-secondary);">{{ form.exit_price.help_text }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 30px;">
+                <label for="{{ form.notes.id_for_label }}" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Notes</label>
+                {{ form.notes }}
+                <style>
+                    #{{ form.notes.id_for_label }} {
+                        width: 100%;
+                        padding: 12px 15px;
+                        background-color: var(--dark-card);
+                        border: 1px solid rgba(255, 255, 255, 0.1);
+                        border-radius: var(--border-radius);
+                        color: var(--text-primary);
+                        font-size: 1rem;
+                        min-height: 100px;
+                        transition: border-color 0.2s ease;
+                    }
+                    #{{ form.notes.id_for_label }}:focus {
+                        border-color: var(--neon-blue);
+                        outline: none;
+                        box-shadow: 0 0 0 2px rgba(58, 134, 255, 0.2);
+                    }
+                </style>
+                {% if form.notes.errors %}
+                    <div style="color: var(--neon-red); margin-top: 5px; font-size: 0.9rem;">{{ form.notes.errors }}</div>
+                {% endif %}
+                <div style="margin-top: 5px; font-size: 0.85rem; color: var(--text-secondary);">Additional notes about this position (optional)</div>
+            </div>
+            
+            <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px;">
+                <a href="{% url 'gt:gt_position_list' %}" class="btn btn-outline" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-times"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-primary" style="flex: 1; min-width: 130px; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                    <i class="fas fa-save"></i> Save
+                </button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Price Lookup Card -->
+    <div style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 20px; max-width: 700px; margin: 20px auto 0; box-shadow: var(--shadow);">
+        <h2 style="margin-bottom: 15px; font-size: 1.3rem; font-weight: 600; color: var(--text-primary);">Stock Price Lookup</h2>
+        
+        <div style="margin-bottom: 15px;">
+            <label for="ticker-lookup" style="display: block; margin-bottom: 8px; font-weight: 500; color: var(--text-primary);">Stock Symbol</label>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="ticker-lookup" placeholder="Enter symbol..." style="flex: 1; padding: 12px 15px; background-color: var(--dark-card); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: var(--border-radius); color: var(--text-primary); font-size: 1rem;">
+                <button id="lookup-price-btn" class="btn btn-primary" style="display: flex; align-items: center; gap: 5px; padding: 10px 15px;">
+                    <i class="fas fa-search"></i> Lookup
+                </button>
+            </div>
+        </div>
+        
+        <div id="price-result" class="mt-3 d-none" style="display: none; margin-top: 15px; padding: 15px; background-color: var(--dark-card); border-radius: var(--border-radius); border-left: 4px solid var(--neon-blue);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div id="price-ticker" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;"></div>
+                    <div id="price-value" style="font-size: 1.2rem; font-weight: 600; color: var(--text-primary);"></div>
+                </div>
+                <button id="use-price-btn" class="btn btn-primary" style="padding: 8px 12px; display: flex; align-items: center; gap: 5px;">
+                    <i class="fas fa-check"></i> Use
+                </button>
+            </div>
+        </div>
+        
+        <div id="price-error" class="mt-3 d-none" style="display: none; margin-top: 15px; padding: 12px 15px; background-color: rgba(255, 59, 59, 0.1); border-radius: var(--border-radius); color: var(--neon-red);">
+            <span id="error-message"></span>
+        </div>
+        
+        <div style="margin-top: 15px; font-size: 0.85rem; color: var(--text-secondary);">
+            Use this tool to look up the current price of a stock. Click "Use" to automatically fill in the entry price field.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Price lookup functionality
+        $('#lookup-price-btn').click(function() {
+            var ticker = $('#ticker-lookup').val().trim().toUpperCase();
+            if (!ticker) {
+                $('#price-error').css('display', 'block');
+                $('#error-message').text('Please enter a stock symbol');
+                $('#price-result').css('display', 'none');
+                return;
+            }
+            
+            // Show loading state
+            $(this).prop('disabled', true);
+            $(this).html('<i class="fas fa-spinner fa-spin"></i> Loading...');
+            $('#price-error').css('display', 'none');
+            
+            // Make API request
+            $.ajax({
+                url: '{% url "gt:gt_get_single_price" ticker="PLACEHOLDER" %}'.replace('PLACEHOLDER', ticker),
+                type: 'GET',
+                success: function(data) {
+                    if (data.success) {
+                        // Show result
+                        $('#price-ticker').text(data.ticker);
+                        $('#price-value').text('$' + parseFloat(data.price).toFixed(2));
+                        $('#price-result').css('display', 'block');
+                        
+                        // Store the price for "Use" button
+                        $('#use-price-btn').data('price', data.price);
+                        $('#use-price-btn').data('ticker', data.ticker);
+                    } else {
+                        // Show error
+                        $('#price-error').css('display', 'block');
+                        $('#error-message').text(data.message);
+                        $('#price-result').css('display', 'none');
+                    }
+                    
+                    // Reset button
+                    $('#lookup-price-btn').prop('disabled', false);
+                    $('#lookup-price-btn').html('<i class="fas fa-search"></i> Lookup');
+                },
+                error: function() {
+                    // Show error
+                    $('#price-error').css('display', 'block');
+                    $('#error-message').text('Error connecting to server. Please try again.');
+                    $('#price-result').css('display', 'none');
+                    
+                    // Reset button
+                    $('#lookup-price-btn').prop('disabled', false);
+                    $('#lookup-price-btn').html('<i class="fas fa-search"></i> Lookup');
+                }
+            });
+        });
+        
+        // Use price button
+        $('#use-price-btn').click(function() {
+            var price = $(this).data('price');
+            var ticker = $(this).data('ticker');
+            
+            // Fill the form fields
+            $('#{{ form.entry_price.id_for_label }}').val(price);
+            $('#{{ form.ticker.id_for_label }}').val(ticker);
+        });
+        
+        // Enter key in lookup field
+        $('#ticker-lookup').keypress(function(e) {
+            if (e.which == 13) {
+                e.preventDefault();
+                $('#lookup-price-btn').click();
+            }
+        });
+    });
+</script>
+{% endblock %}

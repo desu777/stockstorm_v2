@@ -1,0 +1,479 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - StockStorm{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        margin-bottom: 40px;
+    }
+    
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        font-family: 'Space Grotesk', sans-serif;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        margin-bottom: 10px;
+    }
+    
+    .welcome-message {
+        color: var(--text-secondary);
+        font-size: 1.1rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 25px;
+        margin-bottom: 40px;
+    }
+    
+    .stat-card {
+        background: var(--dark-card);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--neon-shadow-purple);
+    }
+    
+    .stat-icon {
+        font-size: 2rem;
+        margin-bottom: 15px;
+        background: var(--gradient);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+    
+    .stat-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: 5px;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    .stat-label {
+        color: var(--text-secondary);
+        font-size: 1rem;
+    }
+    
+    .card-section {
+        margin-bottom: 50px;
+    }
+    
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 25px;
+    }
+    
+    .section-title {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-family: 'Space Grotesk', sans-serif;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .section-title i {
+        color: var(--primary-purple);
+    }
+    
+    .bot-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 25px;
+    }
+    
+    .bot-card {
+        background: var(--dark-card);
+        border-radius: var(--border-radius);
+        padding: 25px;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        display: flex;
+        flex-direction: column;
+        min-height: 270px;
+    }
+    
+    .bot-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--neon-shadow-purple);
+    }
+    
+    .bot-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 15px;
+    }
+    
+    .bot-name {
+        font-size: 1.25rem;
+        font-weight: 600;
+        font-family: 'Space Grotesk', sans-serif;
+        color: var(--text-primary);
+        margin: 0;
+    }
+    
+    .bot-status {
+        padding: 5px 10px;
+        border-radius: 50px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-running {
+        background: rgba(0, 255, 170, 0.1);
+        color: #00ffaa;
+        border: 1px solid rgba(0, 255, 170, 0.3);
+    }
+    
+    .status-finished {
+        background: rgba(255, 218, 0, 0.1);
+        color: #ffda00;
+        border: 1px solid rgba(255, 218, 0, 0.3);
+    }
+    
+    .status-error {
+        background: rgba(255, 0, 83, 0.1);
+        color: #ff0053;
+        border: 1px solid rgba(255, 0, 83, 0.3);
+    }
+    
+    .status-new {
+        background: rgba(61, 132, 255, 0.1);
+        color: #3d84ff;
+        border: 1px solid rgba(61, 132, 255, 0.3);
+    }
+    
+    .bot-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px 20px;
+        margin-bottom: 20px;
+    }
+    
+    .detail-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .detail-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+    }
+    
+    .detail-value {
+        font-size: 1rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .bot-actions {
+        display: flex;
+        gap: 10px;
+        margin-top: auto;
+    }
+    
+    .action-btn {
+        padding: 8px 16px;
+        font-size: 0.85rem;
+        border-radius: var(--border-radius);
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+    }
+    
+    .btn-view {
+        background: rgba(138, 43, 226, 0.1);
+        color: var(--primary-purple);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+        align-self: flex-start;
+    }
+    
+    .btn-view:hover {
+        background: rgba(138, 43, 226, 0.2);
+    }
+    
+    .create-bot-banner {
+        background: linear-gradient(to right, rgba(138, 43, 226, 0.2), rgba(58, 134, 255, 0.2));
+        border-radius: var(--border-radius);
+        padding: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 40px;
+        border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+    
+    .banner-content {
+        max-width: 60%;
+    }
+    
+    .banner-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+        font-family: 'Space Grotesk', sans-serif;
+    }
+    
+    .banner-text {
+        color: var(--text-secondary);
+        margin-bottom: 0;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        background: var(--dark-card);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    
+    .empty-icon {
+        font-size: 4rem;
+        color: var(--text-secondary);
+        opacity: 0.3;
+        margin-bottom: 20px;
+    }
+    
+    .empty-title {
+        font-size: 1.4rem;
+        color: var(--text-primary);
+        margin-bottom: 10px;
+        font-weight: 600;
+    }
+    
+    .empty-text {
+        color: var(--text-secondary);
+        margin-bottom: 25px;
+        max-width: 450px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+    
+    .bot-type-badge {
+        display: inline-block;
+        padding: 3px 8px;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 8px;
+        text-transform: uppercase;
+    }
+    
+    .bot-type-51015rei {
+        background: rgba(138, 43, 226, 0.15);
+        color: var(--primary-purple);
+        border: 1px solid rgba(138, 43, 226, 0.3);
+    }
+    
+    .bot-type-51015 {
+        background: rgba(58, 134, 255, 0.15);
+        color: var(--primary-blue);
+        border: 1px solid rgba(58, 134, 255, 0.3);
+    }
+    
+    /* TradingView Widget Styles */
+    .tradingview-widget-container {
+        background: var(--dark-card);
+        border-radius: var(--border-radius);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        padding: 20px;
+        margin-bottom: 40px;
+        height: 500px;
+        width: 100%;
+        overflow: hidden;
+    }
+    
+    @media (max-width: 768px) {
+        .stats-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .bot-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .bot-card {
+            min-height: 300px;
+        }
+        
+        .bot-actions {
+            flex-direction: row;
+            width: 100%;
+        }
+        
+        .action-btn {
+            flex: 1;
+        }
+        
+        .create-bot-banner {
+            flex-direction: column;
+            text-align: center;
+        }
+        
+        .banner-content {
+            max-width: 100%;
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div style="margin: 40px 0;">
+    <div class="dashboard-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="welcome-message">Welcome back, {{ user.username }}! Here's a summary of your trading activities.</p>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="stat-value">{{ active_bots_count|default:"0" }}</div>
+            <div class="stat-label">Active Bots</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <div class="stat-value">{{ total_bots_count|default:"0" }}</div>
+            <div class="stat-label">Total Bots</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-exchange-alt"></i>
+            </div>
+            <div class="stat-value">${{ trading_volume|default:"0" }}</div>
+            <div class="stat-label">Trading Volume</div>
+        </div>
+        
+        <div class="stat-card">
+            <div class="stat-icon">
+                <i class="fas fa-wallet"></i>
+            </div>
+            <div class="stat-value">${{ profit|default:"0" }}</div>
+            <div class="stat-label">Total Profit</div>
+        </div>
+    </div>
+    
+    <div class="create-bot-banner">
+        <div class="banner-content">
+            <h2 class="banner-title">Create Trading Bot</h2>
+            <p class="banner-text">Choose between 51015rei (with reinvestment) or 51015 (without reinvestment) to automate your crypto trading strategy.</p>
+        </div>
+        <a href="{% url 'bnb_create' %}" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Create Bot
+        </a>
+    </div>
+    
+    <div class="card-section">
+        <div class="section-header">
+            <h2 class="section-title">
+                <i class="fas fa-robot"></i> Your Trading Bots
+            </h2>
+            <a href="{% url 'bnb_list' %}" class="btn btn-outline">View All</a>
+        </div>
+        
+        {% if recent_bots %}
+        <div class="bot-grid">
+            {% for bot in recent_bots %}
+            <div class="bot-card">
+                <div class="bot-header">
+                    <h3 class="bot-name">
+                        {{ bot.name }}
+                        {% if "51015rei" in bot.name %}
+                            <span class="bot-type-badge bot-type-51015rei">Reinvestment</span>
+                        {% else %}
+                            <span class="bot-type-badge bot-type-51015">Standard</span>
+                        {% endif %}
+                    </h3>
+                    <span class="bot-status status-{{ bot.status|lower }}">{{ bot.status }}</span>
+                </div>
+                
+                <div class="bot-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Symbol</span>
+                        <span class="detail-value">{{ bot.instrument }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Capital</span>
+                        <span class="detail-value">${{ bot.capital }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Created</span>
+                        <span class="detail-value">{{ bot.created_at|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Bot Type</span>
+                        <span class="detail-value">
+                            {% if "51015rei" in bot.name %}
+                                51015rei (Reinvestment)
+                            {% else %}
+                                51015 (Standard)
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="bot-actions">
+                    <a href="{% url 'bnb_detail' bot.id %}" class="action-btn btn-view">
+                        <i class="fas fa-eye"></i> View Details
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <h3 class="empty-title">No Trading Bots Yet</h3>
+            <p class="empty-text">You haven't created any trading bots yet. Choose between 51015rei (with reinvestment) or 51015 (without reinvestment) to get started.</p>
+            <a href="{% url 'bnb_create' %}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Create Your First Bot
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Any dashboard-specific JavaScript can go here
+    });
+</script>
+{% endblock %} 

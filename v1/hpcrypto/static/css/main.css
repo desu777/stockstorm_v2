@@ -1,0 +1,47 @@
+/* Dodaję nowe style dla komunikatów systemowych */
+#system-message {
+    position: fixed;
+    top: 85px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--dark-surface);
+    color: var(--text-primary);
+    padding: 15px 20px;
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow);
+    z-index: 1000;
+    max-width: 90%;
+    min-width: 300px;
+    text-align: center;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+}
+
+#system-message.success {
+    border-left: 4px solid var(--neon-green);
+}
+
+#system-message.error {
+    border-left: 4px solid var(--neon-red);
+}
+
+#system-message.info {
+    border-left: 4px solid var(--neon-blue);
+}
+
+.system-message-close {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    cursor: pointer;
+    color: var(--text-secondary);
+}
+
+.system-message-close:hover {
+    color: var(--text-primary);
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+} 

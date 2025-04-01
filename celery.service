@@ -1,0 +1,16 @@
+[Unit]
+Description=Celery Service for StockStorm
+After=network.target
+
+[Service]
+User=root
+Group=www-data
+WorkingDirectory=/root/stockstorm-1/v1
+ExecStart=/usr/local/bin/celery -A stockstorm_project worker --loglevel=info
+Restart=on-failure
+RestartSec=5
+KillMode=mixed
+TimeoutSec=300
+
+[Install]
+WantedBy=multi-user.target 

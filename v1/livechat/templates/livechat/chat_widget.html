@@ -1,0 +1,44 @@
+<!-- Komponent Live Chat Widget -->
+<link rel="stylesheet" href="/static/livechat/style.css?v={% now 'U' %}">
+<div id="live-chat-widget" class="live-chat-widget">
+    <div id="chat-header" class="chat-header">
+        <h3><i class="fas fa-comments"></i> Live Chat</h3>
+        <button id="toggle-chat" class="toggle-chat"><i class="fas fa-chevron-down"></i></button>
+        <div id="new-message-indicator" class="new-message-indicator">0</div>
+    </div>
+    <div id="chat-messages" class="chat-messages">
+        <div class="empty-chat">Ładowanie wiadomości...</div>
+    </div>
+    <div class="chat-input">
+        <input type="text" id="chat-input" placeholder="Napisz wiadomość...">
+        <button id="emoji-picker-btn" type="button"><i class="far fa-smile"></i></button>
+        <button id="send-message" type="button"><i class="fas fa-paper-plane"></i></button>
+    </div>
+    <div id="emoji-picker" class="emoji-picker">
+        <div class="emoji-container">
+            <span class="emoji" data-emoji="😊">😊</span>
+            <span class="emoji" data-emoji="😂">😂</span>
+            <span class="emoji" data-emoji="❤️">❤️</span>
+            <span class="emoji" data-emoji="👍">👍</span>
+            <span class="emoji" data-emoji="😎">😎</span>
+            <span class="emoji" data-emoji="🔥">🔥</span>
+            <span class="emoji" data-emoji="🎉">🎉</span>
+            <span class="emoji" data-emoji="🚀">🚀</span>
+            <span class="emoji" data-emoji="💰">💰</span>
+            <span class="emoji" data-emoji="📈">📈</span>
+            <span class="emoji" data-emoji="📉">📉</span>
+            <span class="emoji" data-emoji="🤔">🤔</span>
+            <span class="emoji" data-emoji="😅">😅</span>
+            <span class="emoji" data-emoji="🙏">🙏</span>
+            <span class="emoji" data-emoji="👨‍💻">👨‍💻</span>
+            <span class="emoji" data-emoji="💯">💯</span>
+        </div>
+    </div>
+</div>
+
+<!-- Hidden inputs for JS -->
+<input type="hidden" id="user-id" value="{{ request.user.id }}">
+<input type="hidden" id="username" value="{{ request.user.username }}">
+
+<!-- Dodajemy timestamp, aby wymusić odświeżenie pliku JS i CSS -->
+<script src="/static/livechat/chat.js?v={% now 'U' %}"></script>

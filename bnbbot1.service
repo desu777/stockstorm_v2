@@ -1,0 +1,16 @@
+[Unit]
+Description=BnbBot1 Microservice
+After=network.target mysql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/stockstorm_v2/bnbbot1
+Environment="PATH=/var/www/stockstorm_v2/venv/bin"
+ExecStart=/var/www/stockstorm_v2/venv/bin/gunicorn --workers 3 --bind 0.0.0.0:8006 bnbbot1.wsgi:application
+Restart=on-failure
+RestartSec=5
+SyslogIdentifier=bnbbot1
+
+[Install]
+WantedBy=multi-user.target

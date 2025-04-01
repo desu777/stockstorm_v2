@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+{% load static %}
+{% load hpcrypto_extras %}
+
+{% block title %}Pending Orders | StockStorm{% endblock %}
+
+{% block head_extra %}
+<style>
+    /* Styl dla ikon akcji */
+    .action-icon {
+        cursor: pointer;
+        font-size: 1.2rem;
+        transition: color 0.2s;
+    }
+    .action-icon:hover {
+        color: var(--neon-blue);
+    }
+    
+    /* Styl dla sekcji oczekujących zleceń */
+    .pending-orders-section {
+        margin-top: 30px;
+        padding: 20px;
+        background-color: var(--dark-card);
+        border-radius: var(--border-radius);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    }
+    
+    .pending-orders-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+    }
+    
+    .pending-orders-table th {
+        text-align: left;
+        padding: 12px 15px;
+        background-color: rgba(255, 255, 255, 0.05);
+        color: var(--text-secondary);
+        font-weight: 600;
+        font-size: 0.85rem;
+    }
+    
+    .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    
+    .badge-waiting {
+        background-color: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+    }
+    
+    .badge-created {
+        background-color: rgba(0, 123, 255, 0.15);
+        color: #007bff;
+    }
+    
+    .badge-executed {
+        background-color: rgba(40, 167, 69, 0.15);
+        color: #28a745;
+    }
+    
+    .badge-cancelled {
+        background-color: rgba(108, 117, 125, 0.15);
+        color: #6c757d;
+    }
+    
+    .badge-error {
+        background-color: rgba(220, 53, 69, 0.15);
+        color: #dc3545;
+    }
+
+    /* Style dla footera */
+    footer {
+        background-color: var(--dark-surface);
+        padding: 30px 0;
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+        margin-top: 50px;
+    }
+    
+    .footer-content {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    .social-links {
+        display: flex;
+        gap: 15px;
+    }
+    
+    .social-links a {
+        color: var(--text-secondary);
+        font-size: 1.2rem;
+        transition: all 0.3s ease;
+    }
+    
+    .social-links a:hover {
+        color: var(--primary-purple);
+        transform: translateY(-2px);
+    }
+    
+    .copyright {
+        color: var(--text-secondary);
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="font-size: 2.2rem; font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent;">Pending Orders</h1>
+        <div style="display: flex; gap: 10px;">
+            <a href="{% url 'position_list' %}" class="btn btn-outline" style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-arrow-left"></i> Back to Portfolio</a>
+            <button class="btn btn-primary" id="new-order-btn" style="display: flex; align-items: center; gap: 5px;"><i class="fas fa-plus-circle"></i> New Order</button>
+        </div>
+    </div>
+
+    <!-- Pending Orders Section -->
+    <div class="pending-orders-section">
+        {% if orders %}
+        <table class="pending-orders-table">
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Symbol</th>
+                    <th>Amount</th>
+                    <th>Limit Price</th>
+                    <th>Trigger Price</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                    <td style="padding: 12px 15px; color: var(--text-primary);">
+                        {% if order.order_type == 'STOP_LIMIT_BUY' %}
+                        <span style="color: var(--neon-green);"><i class="fas fa-arrow-down"></i> Buy</span>
+                        {% else %}
+                        <span style="color: var(--neon-red);"><i class="fas fa-arrow-up"></i> Sell</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px 15px; color: var(--text-primary);">{{ order.symbol }}{{ order.currency }}</td>
+                    <td style="padding: 12px 15px; color: var(--text-primary);">{{ order.display_amount }}</td>
+                    <td style="padding: 12px 15px; color: var(--text-primary);">${{ order.limit_price }}</td>
+                    <td style="padding: 12px 15px; color: var(--text-primary);">${{ order.trigger_price }}</td>
+                    <td style="padding: 12px 15px;">
+                        {% if order.status == 'WAITING' %}
+                        <span class="badge badge-waiting">Waiting</span>
+                        {% elif order.status == 'CREATED' %}
+                        <span class="badge badge-created">Created</span>
+                        {% elif order.status == 'EXECUTED' %}
+                        <span class="badge badge-executed">Executed</span>
+                        {% elif order.status == 'CANCELLED' %}
+                        <span class="badge badge-cancelled">Cancelled</span>
+                        {% elif order.status == 'ERROR' %}
+                        <span class="badge badge-error" title="{{ order.error_message }}">Error</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 12px 15px; color: var(--text-secondary); font-size: 0.9rem;">
+                        {{ order.created_at|date:"M d, H:i" }}
+                    </td>
+                    <td style="padding: 12px 15px;">
+                        {% if order.is_active %}
+                        <a href="{% url 'cancel_order' order.id %}" class="action-icon" title="Cancel Order" style="color: var(--neon-red);">
+                            <i class="fas fa-times-circle"></i>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'view_order' order.id %}" class="action-icon" title="View Details" style="margin-left: 10px;">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div style="padding: 30px; text-align: center; color: var(--text-secondary);">
+            <p>No pending orders found. Create a new order using the AI Agent with commands like:</p>
+            <p style="margin-top: 10px; font-style: italic; color: var(--neon-blue);">
+                "Set stop limit buy order for BTC at limit price 85000 trigger 85100 for 100 USDT"
+            </p>
+            <p style="margin-top: 10px; font-style: italic; color: var(--neon-blue);">
+                "Ustaw zlecenie stop limit buy na BTC cena 85000 trigger 85100 za 100 USDT"
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Obsługa przycisku "Nowe zlecenie"
+    document.getElementById('new-order-btn').addEventListener('click', function() {
+        // Przekieruj do wiadomości AI, gdzie użytkownik może wprowadzić komendę
+        window.location.href = "{% url 'ai_agent_chat' %}?message=set stop limit ";
+    });
+});
+</script>
+{% endblock %} 

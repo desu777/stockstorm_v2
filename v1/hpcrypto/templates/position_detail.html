@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {{ position.ticker }} Details | StockStorm
+{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 30px;">
+    <!-- Position header with actions -->
+    <div style="display: flex; flex-direction: column; margin-bottom: 25px;">
+        <h1 style="font-size: clamp(1.5rem, 5vw, 2rem); font-weight: 700; background: var(--gradient); -webkit-background-clip: text; background-clip: text; color: transparent; margin: 0 0 15px 0;">
+            {{ position.ticker }} Details
+        </h1>
+        
+        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+            <a href="{% url 'edit_position' position.id %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{% url 'add_alert' position.id %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-bell"></i> Add Alert
+            </a>
+            <a href="{% url 'delete_position' position.id %}" class="btn btn-danger" style="display: flex; align-items: center; gap: 8px; position: relative;">
+                <i class="fas fa-trash-alt delete-icon"></i> Delete
+            </a>
+            <a href="{% url 'position_list' %}" class="btn btn-outline" style="display: flex; align-items: center; gap: 8px; margin-left: auto;">
+                <i class="fas fa-arrow-left"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Position information card -->
+    <div class="position-info-card" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 20px; margin-bottom: 30px; box-shadow: var(--shadow);">
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+            <!-- Left column -->
+            <div>
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Category</span>
+                    <span class="info-value" style="display: block; color: var(--text-primary); font-size: 1.1rem;">{{ position.category.name }}</span>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Ticker</span>
+                    <span class="info-value" style="display: block; color: var(--text-primary); font-size: 1.1rem;">{{ position.ticker }}</span>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Quantity</span>
+                    <span class="info-value" style="display: block; color: var(--text-primary); font-size: 1.1rem;">{{ position.quantity }}</span>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Entry Price</span>
+                    <span class="info-value" style="display: block; color: var(--text-primary); font-size: 1.1rem;">${{ position.entry_price|floatformat:4 }}</span>
+                </div>
+            </div>
+            
+            <!-- Right column -->
+            <div>
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Current Price</span>
+                    <span class="info-value" id="current-price-display" style="display: block; color: var(--text-primary); font-size: 1.1rem;">
+                        {% if position.current_price %}
+                            ${{ position.current_price|floatformat:4 }}
+                        {% else %}
+                            <span style="color: var(--text-secondary);">Not available</span>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Exit Price</span>
+                    <span class="info-value" style="display: block; color: var(--text-primary); font-size: 1.1rem;">
+                        {% if position.exit_price %}
+                            ${{ position.exit_price|floatformat:4 }}
+                        {% else %}
+                            <span style="color: var(--text-secondary);">Not set</span>
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="info-item" style="margin-bottom: 15px;">
+                    <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Position Size</span>
+                    <span class="info-value" id="position-size-display" style="display: block; color: var(--text-primary); font-size: 1.1rem;">
+                        {% if position.current_price %}
+                            ${{ position.position_size|floatformat:2 }}
+                        {% else %}
+                            <span style="color: var(--text-secondary);">Not available</span>
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Profit/Loss section -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; margin-bottom: 20px;">
+            <div class="profit-loss-item" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; box-shadow: var(--shadow-sm);">
+                <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Profit/Loss ($)</span>
+                <span class="info-value" id="pl-dollar-display" style="display: block; font-size: 1.2rem; font-weight: 600;">
+                    {% if position.profit_loss_dollar %}
+                        <span class="{% if position.profit_loss_dollar > 0 %}pl-positive{% elif position.profit_loss_dollar < 0 %}pl-negative{% endif %}">
+                            {% if position.profit_loss_dollar > 0 %}+{% endif %}${{ position.profit_loss_dollar|floatformat:2 }}
+                        </span>
+                    {% else %}
+                        <span style="color: var(--text-secondary);">Not available</span>
+                    {% endif %}
+                </span>
+            </div>
+            
+            <div class="profit-loss-item" style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; box-shadow: var(--shadow-sm);">
+                <span class="info-label" style="display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 5px;">Profit/Loss (%)</span>
+                <span class="info-value" id="pl-percentage-display" style="display: block; font-size: 1.2rem; font-weight: 600;">
+                    {% if position.profit_loss_percent %}
+                        <span class="{% if position.profit_loss_percent > 0 %}pl-positive{% elif position.profit_loss_percent >= -30 %}pl-neutral{% else %}pl-negative{% endif %}">
+                            {% if position.profit_loss_percent > 0 %}+{% endif %}{{ position.profit_loss_percent|floatformat:2 }}%
+                        </span>
+                    {% else %}
+                        <span style="color: var(--text-secondary);">Not available</span>
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Notes section -->
+        <div style="margin-bottom: 20px;">
+            <span class="info-label">Notes</span>
+            <div style="background-color: var(--dark-card); border-radius: var(--border-radius); padding: 15px; margin-top: 5px; color: var(--text-primary);">
+                {% if position.notes %}
+                    {{ position.notes|linebreaks }}
+                {% else %}
+                    <span style="color: var(--text-secondary); font-style: italic;">No notes</span>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Timestamps -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 15px; font-size: 0.85rem; color: var(--text-secondary);">
+            <div>Created: {{ position.created_at|date:"M d, Y H:i" }}</div>
+            <div>Last Update: {{ position.updated_at|date:"M d, Y H:i" }}</div>
+        </div>
+        
+        <!-- Refresh section -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+            <div id="price-refresh-info" style="display: flex; align-items: center; gap: 10px;">
+                <span style="color: var(--text-secondary); font-size: 0.9rem;">
+                    <i class="fas fa-sync-alt"></i> Auto-refresh in <span id="countdown-timer">30</span>s
+                </span>
+            </div>
+            
+            <button id="refresh-button" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-sync-alt"></i> Refresh Price
+            </button>
+        </div>
+    </div>
+    
+    <!-- Alerts card -->
+    <div class="alerts-card" style="background-color: var(--dark-surface); border-radius: var(--border-radius); padding: 25px; margin-bottom: 30px; box-shadow: var(--shadow);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: 600; color: var(--text-primary);">Price Alerts</h2>
+            <a href="{% url 'add_alert' position.id %}" class="btn btn-primary" style="display: flex; align-items: center; gap: 8px;">
+                <i class="fas fa-plus"></i> New Alert
+            </a>
+        </div>
+        
+        {% if alerts %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+                    <thead>
+                        <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.1);">
+                            <th style="text-align: left; padding: 12px 15px; color: var(--text-secondary); font-weight: 500; font-size: 0.9rem;">Type</th>
+                            <th style="text-align: left; padding: 12px 15px; color: var(--text-secondary); font-weight: 500; font-size: 0.9rem;">Threshold</th>
+                            <th style="text-align: left; padding: 12px 15px; color: var(--text-secondary); font-weight: 500; font-size: 0.9rem;">Status</th>
+                            <th style="text-align: left; padding: 12px 15px; color: var(--text-secondary); font-weight: 500; font-size: 0.9rem;">Notes</th>
+                            <th style="text-align: right; padding: 12px 15px; color: var(--text-secondary); font-weight: 500; font-size: 0.9rem;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for alert in alerts %}
+                            <tr style="border-bottom: 1px solid rgba(255, 255, 255, 0.05);">
+                                <td style="padding: 15px; color: var(--text-primary); font-weight: 500;">
+                                    {% if alert.alert_type == 'price_above' %}
+                                        <span style="display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-arrow-up" style="color: var(--neon-green);"></i> Price Above
+                                        </span>
+                                    {% elif alert.alert_type == 'price_below' %}
+                                        <span style="display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-arrow-down" style="color: var(--neon-red);"></i> Price Below
+                                        </span>
+                                    {% elif alert.alert_type == 'price_movement' %}
+                                        <span style="display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-exchange-alt" style="color: var(--neon-blue);"></i> Price Movement
+                                        </span>
+                                    {% elif alert.alert_type == 'price_target' %}
+                                        <span style="display: flex; align-items: center; gap: 8px;">
+                                            <i class="fas fa-bullseye" style="color: var(--neon-purple);"></i> Price Target
+                                        </span>
+                                    {% else %}
+                                        {{ alert.get_alert_type_display }}
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 15px; color: var(--text-primary);">
+                                    {% if alert.alert_type == 'price_movement' %}
+                                        {{ alert.threshold_value|floatformat:2 }}%
+                                    {% else %}
+                                        ${{ alert.threshold_value|floatformat:4 }}
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 15px;">
+                                    <span class="alert-{{ alert.status }}">
+                                        {% if alert.status == 'triggered' %}
+                                            <i class="fas fa-bell"></i> Triggered
+                                        {% elif alert.is_waiting %}
+                                            <span class="alert-waiting">
+                                                <i class="fas fa-spinner fa-spin"></i> Waiting
+                                            </span>
+                                        {% elif alert.status == 'active' %}
+                                            <i class="fas fa-clock"></i> Active
+                                        {% elif alert.status == 'inactive' %}
+                                            <i class="fas fa-pause"></i> Inactive
+                                        {% endif %}
+                                    </span>
+                                </td>
+                                <td style="padding: 15px; color: var(--text-primary);">
+                                    {% if alert.notes %}
+                                        <span title="{{ alert.notes }}">{{ alert.notes|truncatechars:30 }}</span>
+                                    {% else %}
+                                        <span style="color: var(--text-secondary); font-style: italic;">No notes</span>
+                                    {% endif %}
+                                </td>
+                                <td style="padding: 15px; text-align: right;">
+                                    <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                                        <a href="{% url 'edit_alert' alert.id %}" class="btn btn-sm btn-primary" title="Edit Alert">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'delete_alert' alert.id %}" class="btn btn-sm btn-danger" title="Delete Alert" style="position: relative;">
+                                            <i class="fas fa-trash-alt delete-icon"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="no-alerts">
+                <i class="fas fa-bell-slash"></i>
+                <p>No alerts set for this position</p>
+                <a href="{% url 'add_alert' position.id %}" class="btn btn-primary">Create Alert</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .info-item {
+        margin-bottom: 15px;
+    }
+    
+    .info-label {
+        display: block;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        margin-bottom: 5px;
+    }
+    
+    .info-value {
+        display: block;
+        font-size: 1.1rem;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .profit-loss-item .info-value {
+        font-size: 1.3rem;
+        font-weight: 600;
+    }
+    
+    .alert-triggered {
+        background: rgba(255, 59, 59, 0.15);
+        color: var(--neon-red);
+        border: 1px solid rgba(255, 59, 59, 0.3);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .alert-active {
+        background: rgba(58, 134, 255, 0.15);
+        color: var(--neon-blue);
+        border: 1px solid rgba(58, 134, 255, 0.3);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .alert-inactive {
+        background: rgba(255, 255, 255, 0.1);
+        color: var(--text-secondary);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .alert-waiting {
+        background: rgba(255, 193, 7, 0.15);
+        color: #ffc107;
+        border: 1px solid rgba(255, 193, 7, 0.3);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .no-alerts {
+        text-align: center;
+        padding: 40px;
+    }
+    
+    .no-alerts i {
+        font-size: 3rem;
+        color: var(--text-secondary);
+        opacity: 0.3;
+        margin-bottom: 15px;
+    }
+    
+    .no-alerts p {
+        color: var(--text-secondary);
+        margin-bottom: 20px;
+    }
+    
+    .btn-sm {
+        padding: 6px 10px;
+        font-size: 0.85rem;
+    }
+    
+    @media (max-width: 768px) {
+        .position-info-card,
+        .alerts-card {
+            padding: 20px 15px;
+        }
+    }
+    
+    .delete-icon {
+        position: relative;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+        }
+        50% {
+            transform: scale(1.1);
+        }
+        100% {
+            transform: scale(1);
+        }
+    }
+</style>
+
+<script>
+    // JavaScript for auto-refresh functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        // Elements
+        const refreshButton = document.getElementById('refresh-button');
+        const countdownTimer = document.getElementById('countdown-timer');
+        const currentPriceDisplay = document.getElementById('current-price-display');
+        const positionSizeDisplay = document.getElementById('position-size-display');
+        const plDollarDisplay = document.getElementById('pl-dollar-display');
+        const plPercentageDisplay = document.getElementById('pl-percentage-display');
+        
+        // Variables
+        let countdownValue = 30;
+        let countdownInterval;
+        
+        // Start the countdown
+        function startCountdown() {
+            countdownValue = 30;
+            countdownTimer.textContent = countdownValue;
+            
+            // Clear any existing interval
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+            
+            // Set the new interval
+            countdownInterval = setInterval(function() {
+                countdownValue -= 1;
+                countdownTimer.textContent = countdownValue;
+                
+                if (countdownValue <= 0) {
+                    clearInterval(countdownInterval);
+                    refreshPriceData();
+                }
+            }, 1000);
+        }
+        
+        // Refresh price data
+        function refreshPriceData() {
+            const positionId = '{{ position.id }}';
+            const url = `/hpcrypto/position/${positionId}/refresh-price/`;
+            
+            // Show loading state
+            refreshButton.innerHTML = '<i class="fas fa-sync-alt fa-spin"></i> Refreshing...';
+            refreshButton.disabled = true;
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Update the UI with the new data
+                        currentPriceDisplay.innerHTML = `$${parseFloat(data.current_price).toFixed(4)}`;
+                        positionSizeDisplay.innerHTML = `$${parseFloat(data.position_size).toFixed(2)}`;
+                        
+                        const profitLoss = parseFloat(data.profit_loss);
+                        const profitLossPercentage = parseFloat(data.profit_loss_percentage);
+                        
+                        // Update P/L dollar display with color coding
+                        let plDollarHtml = '';
+                        if (profitLoss > 0) {
+                            plDollarHtml = `<span style="color: var(--neon-green);">+$${profitLoss.toFixed(2)}</span>`;
+                        } else if (profitLoss < 0) {
+                            plDollarHtml = `<span style="color: var(--neon-red);">-$${Math.abs(profitLoss).toFixed(2)}</span>`;
+                        } else {
+                            plDollarHtml = `<span>$${profitLoss.toFixed(2)}</span>`;
+                        }
+                        plDollarDisplay.innerHTML = plDollarHtml;
+                        
+                        // Update P/L percentage display with color coding
+                        let plPercentageHtml = '';
+                        if (profitLossPercentage > 0) {
+                            plPercentageHtml = `<span style="color: var(--neon-green);">+${profitLossPercentage.toFixed(2)}%</span>`;
+                        } else if (profitLossPercentage < 0) {
+                            plPercentageHtml = `<span style="color: var(--neon-red);">${profitLossPercentage.toFixed(2)}%</span>`;
+                        } else {
+                            plPercentageHtml = `<span>${profitLossPercentage.toFixed(2)}%</span>`;
+                        }
+                        plPercentageDisplay.innerHTML = plPercentageHtml;
+                        
+                        // Restart the countdown
+                        startCountdown();
+                    } else {
+                        alert('Error refreshing price: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to refresh price. Please try again.');
+                })
+                .finally(() => {
+                    // Reset button
+                    refreshButton.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Price';
+                    refreshButton.disabled = false;
+                });
+        }
+        
+        // Event listener for the refresh button
+        refreshButton.addEventListener('click', function() {
+            refreshPriceData();
+        });
+        
+        // Start the initial countdown
+        startCountdown();
+    });
+</script>
+{% endblock %}
