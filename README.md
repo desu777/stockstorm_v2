@@ -1,8 +1,9 @@
 # StockStorm: Advanced Cryptocurrency Trading Platform
 
 StockStorm is a comprehensive Django-based cryptocurrency trading platform designed to automate trading strategies with a focus on grid trading. The platform leverages microservices architecture to provide real-time market data, automated trade execution, and extensive performance analytics.
+![1](https://github.com/user-attachments/assets/e44a578b-4555-46d5-b969-ee94b8801a5a)
 
-![StockStorm Dashboard](https://github.com/user-attachments/assets/5f0e52f0-6ba3-4dfb-92a4-b16c3b54ca37)
+
 
 ## 🚀 Features
 
