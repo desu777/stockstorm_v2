@@ -121,6 +121,14 @@ StockStorm
    daphne -p 7001 stockstorm_project.asgi:application
    ```
 
+8. Add crontab tasks 
+
+sudo crontab -e
+
+
+0 */2 * * * /bin/systemctl restart bbbot1
+0 */2 * * * /bin/systemctl restart bbbot2
+
 ## 🔐 Security Considerations
 
 StockStorm implements several security measures:
